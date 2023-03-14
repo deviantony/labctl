@@ -1,0 +1,9 @@
+# recipe file (draft)
+recipes:
+  portainer-server:
+    # the base image to use
+    base: ubuntu-2204
+    # the recipe steps to follow
+    steps:
+      - curl https://anthony.portainer.io/docker-portainer | bash
+      - ... # any other step to add / automate
