@@ -15,6 +15,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
+const LABCTL_FLASK_TAG = "labctl-flask"
+
 type (
 	VPSConfig struct {
 		Name   string
@@ -113,7 +115,7 @@ func (builder *DOVPSBuilder) ListVPS() ([]types.VPS, error) {
 			}
 
 			for _, tag := range droplet.Tags {
-				if tag == "vps" {
+				if tag == LABCTL_FLASK_TAG {
 					v := types.VPS{
 						ID:     dropletID,
 						Name:   droplet.Name,
@@ -156,7 +158,7 @@ func (builder *DOVPSBuilder) create(config VPSConfig) (int, error) {
 		Image: godo.DropletCreateImage{
 			Slug: builder.config.BaseImage,
 		},
-		Tags: []string{"vps"},
+		Tags: []string{LABCTL_FLASK_TAG},
 		SSHKeys: []godo.DropletCreateSSHKey{
 			{Fingerprint: builder.config.SSHKeyFingerprint},
 		},
