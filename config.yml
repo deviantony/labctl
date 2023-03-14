@@ -1,0 +1,17 @@
+# Sample configuration file
+global:
+
+lxc:
+  server:
+    addr: https://homesrv.local:8443
+    password: pwd
+  key: data/cert.pem
+  cert: data/key.pem
+
+do:
+  apiToken: 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+  projectID: 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+  sshKeyFingerprint: 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
+  baseImage: ubuntu-22-04-x64
+  pollInterval: 5s
+  pollTimeout: 2m
