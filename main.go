@@ -5,12 +5,14 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/alecthomas/kong"
 	"github.com/deviantony/labctl/commands"
 	"github.com/deviantony/labctl/config"
 	"github.com/deviantony/labctl/types"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func initializeLogger(debug bool) (*zap.SugaredLogger, error) {
@@ -23,7 +25,16 @@ func initializeLogger(debug bool) (*zap.SugaredLogger, error) {
 		return logger.Sugar(), nil
 	}
 
-	return zap.NewExample().Sugar(), nil
+	config := zap.NewProductionConfig()
+	config.Encoding = "console"
+	config.DisableStacktrace = true
+	config.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.TimeOnly)
+	logger, err := config.Build()
+	if err != nil {
+		return nil, err
+	}
+
+	return logger.Sugar(), nil
 }
 
 func main() {
@@ -45,6 +56,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Unable to initialize logger: %s", err)
 	}
+	defer logger.Sync()
 
 	configPath := os.Getenv(config.CONFIG_ENV_OVERRIDE)
 	if configPath == "" {
