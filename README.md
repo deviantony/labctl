@@ -49,3 +49,11 @@ Exec (SSH) into a flask:
 ````
 labctl flask exec <flask-id>
 ````
+
+### Recipes
+
+Apply a recipe:
+
+````
+labctl recipe apply <recipe-id | recipe-name>
+````
