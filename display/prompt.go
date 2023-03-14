@@ -1,4 +1,4 @@
-package commands
+package display
 
 import (
 	"bufio"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func askForConfirmation() (bool, error) {
+func AskForConfirmation() (bool, error) {
 	r := bufio.NewReader(os.Stdin)
 	line, _, err := r.ReadLine()
 	if err != nil {
@@ -25,6 +25,6 @@ func askForConfirmation() (bool, error) {
 		return false, nil
 	default:
 		fmt.Println("Please type [y]es or [n]o and then press enter:")
-		return askForConfirmation()
+		return AskForConfirmation()
 	}
 }

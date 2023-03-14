@@ -10,6 +10,7 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/deviantony/labctl/commands"
 	"github.com/deviantony/labctl/config"
+	"github.com/deviantony/labctl/random"
 	"github.com/deviantony/labctl/types"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -68,9 +69,9 @@ func main() {
 		logger.Fatalf("Unable to read configuration file: %s", err)
 	}
 
-	commands.NonDeterministicMode()
+	random.NonDeterministicMode()
 
-	cmdCtx := commands.NewCommandExecutionContext(ctx, cfg, logger)
+	cmdCtx := types.NewCommandExecutionContext(ctx, cfg, logger)
 	err = cliCtx.Run(cmdCtx)
 	cliCtx.FatalIfErrorf(err)
 }

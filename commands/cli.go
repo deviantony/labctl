@@ -1,12 +1,10 @@
 package commands
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/alecthomas/kong"
-	"github.com/deviantony/labctl/config"
-	"go.uber.org/zap"
+	"github.com/deviantony/labctl/commands/flask"
 )
 
 // VersionFlag is used to display the version of the CLI.
@@ -25,26 +23,12 @@ var CLI struct {
 	Debug   bool        `help:"Enable debug mode."`
 	Version VersionFlag `name:"version" help:"Print version information and quit"`
 
-	// Commands
-	Create CreateCommand `cmd:"" help:"Create a new VPS." default:"withargs"`
-	Cp     CpCommand     `cmd:"" help:"Copy a file or a directory to a remote VPS."`
-	Exec   ExecCommand   `cmd:"" help:"Create a SSH session to the given VPS ID."`
-	Ls     LsCommand     `cmd:"" help:"List all running VPS."`
-	Rm     RmCommand     `cmd:"" help:"Remove a VPS."`
-}
-
-// CommandExecutionContext holds the context and logger for a command execution.
-type CommandExecutionContext struct {
-	context context.Context
-	config  config.Config
-	logger  *zap.SugaredLogger
-}
-
-// NewCommandExecutionContext creates a new command execution context.
-func NewCommandExecutionContext(ctx context.Context, cfg config.Config, logger *zap.SugaredLogger) *CommandExecutionContext {
-	return &CommandExecutionContext{
-		context: ctx,
-		config:  cfg,
-		logger:  logger,
-	}
+	// Flasks
+	Flask struct {
+		Create flask.CreateCommand `cmd:"" help:"Create a new flask." default:"withargs"`
+		Ls     flask.LsCommand     `cmd:"" help:"List existing flasks."`
+		Cp     flask.CpCommand     `cmd:"" help:"Copy a file or a directory to a flask."`
+		Exec   flask.ExecCommand   `cmd:"" help:"Create a SSH session to the given flask ID."`
+		Rm     flask.RmCommand     `cmd:"" help:"Remove a flask."`
+	} `cmd:"" help:"Manage flasks."`
 }
