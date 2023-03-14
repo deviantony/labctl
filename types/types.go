@@ -7,7 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
-const VERSION = "0.1.0"
+const VERSION = "0.2.0-dev"
 
 // VPS represents a VPS instance.
 type VPS struct {
