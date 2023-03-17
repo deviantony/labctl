@@ -3,6 +3,8 @@ recipes:
   portainer-server:
     # the base image to use
     base: ubuntu-2204
+    # region: "-"
+    # size: "-"
     # the recipe steps to follow
     steps:
       - curl https://anthony.portainer.io/docker-portainer | bash
