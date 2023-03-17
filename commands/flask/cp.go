@@ -15,12 +15,12 @@ type CpCommand struct {
 
 // Run executes the cp command.
 func (cmd *CpCommand) Run(cmdCtx types.CommandExecutionContext) error {
-	vpsBuilder := do.NewDOVPSBuilder(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
+	flaskManager := do.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
 
-	vps, err := vpsBuilder.GetVPS(cmd.ID)
+	flask, err := flaskManager.GetFlask(cmd.ID)
 	if err != nil {
 		return err
 	}
 
-	return ssh.CopyToRemote(cmdCtx.Logger, vps.Ipv4, cmd.LocalPath, cmd.RemotePath)
+	return ssh.CopyToRemote(cmdCtx.Logger, flask.Ipv4, cmd.LocalPath, cmd.RemotePath)
 }

@@ -6,23 +6,23 @@ import (
 	"github.com/deviantony/labctl/types"
 )
 
-// LsCommand lists all running VPS.
+// LsCommand lists all running flasks.
 type LsCommand struct{}
 
 // Run executes the ls command.
 func (cmd *LsCommand) Run(cmdCtx types.CommandExecutionContext) error {
-	vpsBuilder := do.NewDOVPSBuilder(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
+	flaskManager := do.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
 
-	vps, err := vpsBuilder.ListVPS()
+	flasks, err := flaskManager.ListFlasks()
 	if err != nil {
 		return err
 	}
 
-	if len(vps) == 0 {
+	if len(flasks) == 0 {
 		cmdCtx.Logger.Info("No flask found")
 		return nil
 	}
 
-	display.DisplayVPSList(vps)
+	display.DisplayFlaskList(flasks)
 	return nil
 }

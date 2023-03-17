@@ -7,13 +7,13 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
-// DisplayVPSList displays a list of VPS in a table format on the standard output.
-func DisplayVPSList(vps []types.VPS) {
+// DisplayFlaskList displays a list of flasks in a table format on the standard output.
+func DisplayFlaskList(flasks []types.Flask) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.AppendHeader(table.Row{"ID", "Name", "IPv4", "Region", "Size"})
 
-	for _, v := range vps {
+	for _, v := range flasks {
 		t.AppendRow(table.Row{v.ID, v.Name, v.Ipv4, v.Region, v.Size})
 	}
 

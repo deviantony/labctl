@@ -9,8 +9,8 @@ import (
 
 const VERSION = "0.2.0-dev"
 
-// VPS represents a VPS instance.
-type VPS struct {
+// A flask is an environment that can run in LXC or in the cloud
+type Flask struct {
 	ID     int
 	Name   string
 	Region string

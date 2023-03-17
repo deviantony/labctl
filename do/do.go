@@ -18,25 +18,27 @@ import (
 const LABCTL_FLASK_TAG = "labctl-flask"
 
 type (
-	VPSConfig struct {
-		Name   string
-		Region string
-		Size   string
-	}
-
-	DOVPSBuilder struct {
+	// FlaskManager is used to manage flasks in DigitalOcean
+	FlaskManager struct {
 		ctx    context.Context
 		config config.DigitalOceanConfig
 		logger *zap.SugaredLogger
 		client *godo.Client
 	}
+
+	dropletConfig struct {
+		Name   string
+		Region string
+		Size   string
+	}
 )
 
-// NewDOVPSBuilder creates a new DOVPSBuilder
-func NewDOVPSBuilder(ctx context.Context, cfg config.DigitalOceanConfig, logger *zap.SugaredLogger) *DOVPSBuilder {
+// NewFlaskManager creates a new flask manager
+// It can create and manage flasks in DigitalOcean as droplets
+func NewFlaskManager(ctx context.Context, cfg config.DigitalOceanConfig, logger *zap.SugaredLogger) *FlaskManager {
 	client := godo.NewFromToken(cfg.APIToken)
 
-	return &DOVPSBuilder{
+	return &FlaskManager{
 		ctx:    ctx,
 		config: cfg,
 		logger: logger,
@@ -44,50 +46,50 @@ func NewDOVPSBuilder(ctx context.Context, cfg config.DigitalOceanConfig, logger 
 	}
 }
 
-// GetVPS retrieves information about a VPS instance based on a given ID or ID prefix
-func (builder *DOVPSBuilder) GetVPS(id int) (*types.VPS, error) {
-	vps, err := builder.ListVPS()
+// GetFlask retrieves information about a flask based on a given ID or ID prefix
+func (manager *FlaskManager) GetFlask(id int) (*types.Flask, error) {
+	flasks, err := manager.ListFlasks()
 	if err != nil {
 		return nil, err
 	}
 
-	matchingVPS := []types.VPS{}
-	for _, v := range vps {
+	matches := []types.Flask{}
+	for _, v := range flasks {
 		if strings.HasPrefix(strconv.Itoa(v.ID), strconv.Itoa(id)) {
-			matchingVPS = append(matchingVPS, v)
+			matches = append(matches, v)
 		}
 	}
 
-	if len(matchingVPS) == 0 {
-		return nil, errors.New("no VPS found matching the given ID")
+	if len(matches) == 0 {
+		return nil, errors.New("no flask found matching the given ID")
 	}
 
-	if len(matchingVPS) > 1 {
-		return nil, errors.New("multiple VPS found matching the given ID, please be more specific")
+	if len(matches) > 1 {
+		return nil, errors.New("multiple flasks found matching the given ID, please be more specific")
 	}
 
-	return &matchingVPS[0], nil
+	return &matches[0], nil
 }
 
-// ListVPS lists all VPS instances
-func (builder *DOVPSBuilder) ListVPS() ([]types.VPS, error) {
-	vps := []types.VPS{}
+// ListFlasks lists all the flasks running in DigitalOcean (inside a specific project)
+func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
+	flasks := []types.Flask{}
 
 	listOpts := &godo.ListOptions{
 		PerPage: 100,
 	}
 
-	resources, _, err := builder.client.Projects.ListResources(builder.ctx, builder.config.ProjectID, listOpts)
+	resources, _, err := manager.client.Projects.ListResources(manager.ctx, manager.config.ProjectID, listOpts)
 	if err != nil {
-		return vps, err
+		return flasks, err
 	}
 
 	for _, resource := range resources {
 		doURN := strings.Split(resource.URN, ":")
 		if len(doURN) != 3 {
-			builder.logger.Warnw("Skipping resource with invalid URN.",
+			manager.logger.Warnw("Skipping resource with invalid URN.",
 				"URN", resource.URN,
-				"Project", builder.config.ProjectID,
+				"Project", manager.config.ProjectID,
 			)
 			continue
 		}
@@ -95,20 +97,20 @@ func (builder *DOVPSBuilder) ListVPS() ([]types.VPS, error) {
 		if doURN[1] == "droplet" {
 			dropletID, err := strconv.Atoi(doURN[2])
 			if err != nil {
-				builder.logger.Warnw("Skipping droplet with invalid identifier.",
+				manager.logger.Warnw("Skipping droplet with invalid identifier.",
 					"URN", resource.URN,
 					"dropletID", doURN[2],
-					"Project", builder.config.ProjectID,
+					"Project", manager.config.ProjectID,
 				)
 				continue
 			}
 
-			droplet, _, err := builder.client.Droplets.Get(builder.ctx, dropletID)
+			droplet, _, err := manager.client.Droplets.Get(manager.ctx, dropletID)
 			if err != nil {
-				builder.logger.Warnw("Unable to retrieve information about a droplet.",
+				manager.logger.Warnw("Unable to retrieve information about a droplet.",
 					"URN", resource.URN,
 					"dropletID", doURN[2],
-					"Project", builder.config.ProjectID,
+					"Project", manager.config.ProjectID,
 					"error", err,
 				)
 				continue
@@ -116,7 +118,7 @@ func (builder *DOVPSBuilder) ListVPS() ([]types.VPS, error) {
 
 			for _, tag := range droplet.Tags {
 				if tag == LABCTL_FLASK_TAG {
-					v := types.VPS{
+					v := types.Flask{
 						ID:     dropletID,
 						Name:   droplet.Name,
 						Region: droplet.Region.Slug,
@@ -129,54 +131,54 @@ func (builder *DOVPSBuilder) ListVPS() ([]types.VPS, error) {
 						v.Ipv4 = "-"
 					}
 
-					vps = append(vps, v)
+					flasks = append(flasks, v)
 					break
 				}
 			}
 		}
 	}
 
-	return vps, nil
+	return flasks, nil
 }
 
-// CreateVPS creates a new VPS instance
-func (builder *DOVPSBuilder) CreateVPS(name, region, size string) (int, error) {
-	config := VPSConfig{
+// CreateFlask creates a new flask as a droplet in DigitalOcean
+func (manager *FlaskManager) CreateFlask(name, region, size string) (int, error) {
+	config := dropletConfig{
 		Name:   name,
 		Region: getRegionFromOption(region),
 		Size:   getSizeFromOption(size),
 	}
 
-	return builder.create(config)
+	return manager.createDroplet(config)
 }
 
-func (builder *DOVPSBuilder) create(config VPSConfig) (int, error) {
+func (manager *FlaskManager) createDroplet(config dropletConfig) (int, error) {
 	createRequest := &godo.DropletCreateRequest{
 		Name:   config.Name,
 		Region: config.Region,
 		Size:   config.Size,
 		Image: godo.DropletCreateImage{
-			Slug: builder.config.BaseImage,
+			Slug: manager.config.BaseImage,
 		},
 		Tags: []string{LABCTL_FLASK_TAG},
 		SSHKeys: []godo.DropletCreateSSHKey{
-			{Fingerprint: builder.config.SSHKeyFingerprint},
+			{Fingerprint: manager.config.SSHKeyFingerprint},
 		},
 		Monitoring: true,
 	}
 
-	newDroplet, _, err := builder.client.Droplets.Create(builder.ctx, createRequest)
+	newDroplet, _, err := manager.client.Droplets.Create(manager.ctx, createRequest)
 	if err != nil {
-		builder.logger.Errorw("Unable to create droplet",
+		manager.logger.Errorw("Unable to create droplet",
 			"error", err,
 		)
 
 		return 0, err
 	}
 
-	_, _, err = builder.client.Projects.AssignResources(builder.ctx, builder.config.ProjectID, newDroplet.URN())
+	_, _, err = manager.client.Projects.AssignResources(manager.ctx, manager.config.ProjectID, newDroplet.URN())
 	if err != nil {
-		builder.logger.Warnw("Unable to assign droplet to project",
+		manager.logger.Warnw("Unable to assign droplet to project",
 			"error", err,
 		)
 	}
@@ -184,13 +186,14 @@ func (builder *DOVPSBuilder) create(config VPSConfig) (int, error) {
 	return newDroplet.ID, nil
 }
 
-// WaitForVPS waits for a VPS instance to be ready
-func (builder *DOVPSBuilder) WaitForVPSToBeReady(dropletID int) (string, error) {
-	vpsIPaddr := ""
+// WaitUntilFlaskIsReady waits for a flask to be ready
+// It returns the IP address of the flask when it is ready
+func (manager *FlaskManager) WaitUntilFlaskIsReady(id int) (string, error) {
+	flaskIP := ""
 
-	err := wait.PollImmediate(builder.config.PollInterval, builder.config.PollTimeout,
+	err := wait.PollImmediate(manager.config.PollInterval, manager.config.PollTimeout,
 		func() (bool, error) {
-			droplet, _, err := builder.client.Droplets.Get(builder.ctx, dropletID)
+			droplet, _, err := manager.client.Droplets.Get(manager.ctx, id)
 			if err != nil {
 				return false, err
 			}
@@ -202,23 +205,23 @@ func (builder *DOVPSBuilder) WaitForVPSToBeReady(dropletID int) (string, error) 
 				}
 
 				if publicIPV4 == "" {
-					builder.logger.Infow("Waiting for VPS to have an IP address")
+					manager.logger.Infow("Waiting for flask to have an IP address")
 					return false, nil
 				}
 
 				_, err = net.Dial("tcp", fmt.Sprintf("%s:%s", publicIPV4, "22"))
 				if err != nil {
-					builder.logger.Infow("Waiting for SSH service to be active",
+					manager.logger.Infow("Waiting for SSH service to be active",
 						"IP address", publicIPV4,
 					)
 					return false, nil
 				}
 
-				builder.logger.Infow("VPS is ready")
-				vpsIPaddr = publicIPV4
+				manager.logger.Infow("Flask is ready")
+				flaskIP = publicIPV4
 				return true, nil
 			} else {
-				builder.logger.Infow("Waiting for VPS to be active",
+				manager.logger.Infow("Waiting for flask to be active",
 					"status", droplet.Status,
 				)
 				return false, nil
@@ -227,29 +230,29 @@ func (builder *DOVPSBuilder) WaitForVPSToBeReady(dropletID int) (string, error) 
 	)
 
 	if err != nil {
-		builder.logger.Errorw("Unable to poll for droplet status",
+		manager.logger.Errorw("Unable to poll for droplet status",
 			"error", err,
 		)
 
 		return "", err
 	}
 
-	return vpsIPaddr, nil
+	return flaskIP, nil
 }
 
-// RemoveVPS removes a VPS instance
-func (builder *DOVPSBuilder) RemoveVPS(dropletID int) error {
-	_, err := builder.client.Droplets.Delete(builder.ctx, dropletID)
+// RemoveFlask removes a flask
+func (manager *FlaskManager) RemoveFlask(id int) error {
+	_, err := manager.client.Droplets.Delete(manager.ctx, id)
 	if err != nil {
-		builder.logger.Errorw("Unable to delete droplet",
+		manager.logger.Errorw("Unable to delete droplet",
 			"error", err,
 		)
 
 		return err
 	}
 
-	builder.logger.Infow("Droplet successfully deleted",
-		"dropletID", dropletID,
+	manager.logger.Infow("Flask successfully deleted",
+		"dropletID", id,
 	)
 
 	return nil

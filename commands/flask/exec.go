@@ -13,12 +13,12 @@ type ExecCommand struct {
 
 // Run executes the exec command.
 func (cmd *ExecCommand) Run(cmdCtx types.CommandExecutionContext) error {
-	vpsBuilder := do.NewDOVPSBuilder(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
+	flaskManager := do.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
 
-	vps, err := vpsBuilder.GetVPS(cmd.ID)
+	flask, err := flaskManager.GetFlask(cmd.ID)
 	if err != nil {
 		return err
 	}
 
-	return ssh.ExecuteSSHSession(cmdCtx.Logger, vps.Ipv4)
+	return ssh.ExecuteSSHSession(cmdCtx.Logger, flask.Ipv4)
 }

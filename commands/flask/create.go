@@ -44,26 +44,27 @@ func (cmd *CreateCommand) Run(cmdCtx types.CommandExecutionContext) error {
 		"Auto remove", cmd.AutoRemove && !cmd.Background,
 	)
 
-	vpsBuilder := do.NewDOVPSBuilder(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
+	flaskManager := do.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
 
-	vpsID, err := vpsBuilder.CreateVPS(flaskName, cmd.Region, cmd.Size)
+	flaskID, err := flaskManager.CreateFlask(flaskName, cmd.Region, cmd.Size)
 	if err != nil {
 		return err
 	}
 
-	vpsIPaddr, err := vpsBuilder.WaitForVPSToBeReady(vpsID)
+	flaskIP, err := flaskManager.WaitUntilFlaskIsReady(flaskID)
 	if err != nil {
 		return err
 	}
 
 	if cmd.Background {
 		cmdCtx.Logger.Infow("Flask created",
-			"ID", vpsID,
+			"ID", flaskID,
+			"IP", flaskIP,
 		)
 		return nil
 	}
 
-	err = ssh.ExecuteSSHSession(cmdCtx.Logger, vpsIPaddr)
+	err = ssh.ExecuteSSHSession(cmdCtx.Logger, flaskIP)
 	if err != nil {
 		return err
 	}
@@ -73,5 +74,5 @@ func (cmd *CreateCommand) Run(cmdCtx types.CommandExecutionContext) error {
 	}
 
 	cmdCtx.Logger.Infow("Automatically removing flask")
-	return vpsBuilder.RemoveVPS(vpsID)
+	return flaskManager.RemoveFlask(flaskID)
 }

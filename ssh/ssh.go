@@ -9,9 +9,9 @@ import (
 	"go.uber.org/zap"
 )
 
-// ExecuteSSHSession executes an SSH session to the given VPS IP address.
-func ExecuteSSHSession(logger *zap.SugaredLogger, vpsIPaddr string) error {
-	sshCmd := exec.Command("ssh", fmt.Sprintf("root@%s", vpsIPaddr), "-o", "StrictHostKeyChecking=no")
+// ExecuteSSHSession executes an SSH session to the given flask IP address.
+func ExecuteSSHSession(logger *zap.SugaredLogger, flaskIP string) error {
+	sshCmd := exec.Command("ssh", fmt.Sprintf("root@%s", flaskIP), "-o", "StrictHostKeyChecking=no")
 	sshCmd.Stdout = os.Stdout
 	sshCmd.Stderr = os.Stderr
 	sshCmd.Stdin = os.Stdin
@@ -22,7 +22,7 @@ func ExecuteSSHSession(logger *zap.SugaredLogger, vpsIPaddr string) error {
 		if !errors.As(err, &exitError) {
 			logger.Errorw("Unable to start SSH session",
 				"error", err,
-				"VPS IP address", vpsIPaddr,
+				"flask IP", flaskIP,
 			)
 
 			return err
@@ -32,8 +32,8 @@ func ExecuteSSHSession(logger *zap.SugaredLogger, vpsIPaddr string) error {
 	return nil
 }
 
-func CopyToRemote(logger *zap.SugaredLogger, vpsIPaddr string, localPath string, remotePath string) error {
-	sshCmd := exec.Command("scp", "-r", "-o", "StrictHostKeyChecking=no", localPath, fmt.Sprintf("root@%s:%s", vpsIPaddr, remotePath))
+func CopyToRemote(logger *zap.SugaredLogger, flaskIP string, localPath string, remotePath string) error {
+	sshCmd := exec.Command("scp", "-r", "-o", "StrictHostKeyChecking=no", localPath, fmt.Sprintf("root@%s:%s", flaskIP, remotePath))
 	sshCmd.Stdout = os.Stdout
 	sshCmd.Stderr = os.Stderr
 	sshCmd.Stdin = os.Stdin
@@ -44,7 +44,7 @@ func CopyToRemote(logger *zap.SugaredLogger, vpsIPaddr string, localPath string,
 		if !errors.As(err, &exitError) {
 			logger.Errorw("Unable to copy file to remote",
 				"error", err,
-				"VPS IP address", vpsIPaddr,
+				"flask IP", flaskIP,
 			)
 
 			return err
