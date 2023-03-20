@@ -5,17 +5,11 @@ import (
 	"errors"
 	"os"
 
+	"github.com/deviantony/labctl/config"
 	"github.com/deviantony/labctl/tls"
 	lxd "github.com/lxc/lxd/client"
 	"github.com/lxc/lxd/shared/api"
 	"go.uber.org/zap"
-)
-
-const (
-	LXD_SERVER_ADDR      = "https://homesrv.local:8443"
-	LXD_SERVER_PASSWORD  = "rewop27"
-	TLS_CERTIFICATE_PATH = "data/cert.pem"
-	TLS_KEY_PATH         = "data/key.pem"
 )
 
 type (
@@ -39,13 +33,13 @@ func fileExists(path string, logger *zap.SugaredLogger) bool {
 
 // NewFlaskManager creates a new flask manager
 // It can create and manage flasks via a LXD server
-func NewFlaskManager(ctx context.Context, logger *zap.SugaredLogger) (*FlaskManager, error) {
+func NewFlaskManager(ctx context.Context, cfg config.LXDConfig, logger *zap.SugaredLogger) (*FlaskManager, error) {
 	logger.Info("Verifying TLS certificates existence")
 
-	if !fileExists(TLS_CERTIFICATE_PATH, logger) || !fileExists(TLS_KEY_PATH, logger) {
+	if !fileExists(cfg.Cert, logger) || !fileExists(cfg.Key, logger) {
 		logger.Info("Unable to locate TLS certificate and key, generating new ones")
 
-		err := tls.GenerateSelfSignedTLSCertificates(logger, TLS_CERTIFICATE_PATH, TLS_KEY_PATH)
+		err := tls.GenerateSelfSignedTLSCertificates(logger, cfg.Cert, cfg.Key)
 		if err != nil {
 			logger.Errorf("Unable to generate TLS certificates: %s", err)
 			return nil, err
@@ -54,19 +48,19 @@ func NewFlaskManager(ctx context.Context, logger *zap.SugaredLogger) (*FlaskMana
 		logger.Info("TLS certificate and key available, skipping generation")
 	}
 
-	clientCertBytes, err := os.ReadFile(TLS_CERTIFICATE_PATH)
+	clientCertBytes, err := os.ReadFile(cfg.Cert)
 	if err != nil {
 		logger.Errorf("Unable to read client certificate: %s", err)
 		return nil, err
 	}
 
-	clientKeyBytes, err := os.ReadFile(TLS_KEY_PATH)
+	clientKeyBytes, err := os.ReadFile(cfg.Key)
 	if err != nil {
 		logger.Errorf("Unable to read client key: %s", err)
 		return nil, err
 	}
 
-	client, err := lxd.ConnectLXDWithContext(ctx, LXD_SERVER_ADDR, &lxd.ConnectionArgs{
+	client, err := lxd.ConnectLXDWithContext(ctx, cfg.Server.Addr, &lxd.ConnectionArgs{
 		TLSClientCert:      string(clientCertBytes),
 		TLSClientKey:       string(clientKeyBytes),
 		InsecureSkipVerify: true,
@@ -91,7 +85,7 @@ func NewFlaskManager(ctx context.Context, logger *zap.SugaredLogger) (*FlaskMana
 			CertificatePut: api.CertificatePut{
 				Type: "client",
 			},
-			Password: LXD_SERVER_PASSWORD,
+			Password: cfg.Server.Password,
 		})
 
 		if err != nil {
