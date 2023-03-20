@@ -1,7 +1,7 @@
 # Sample configuration file
 global:
 
-lxc:
+lxd:
   server:
     addr: https://homesrv.local:8443
     password: pwd

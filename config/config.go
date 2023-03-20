@@ -11,11 +11,11 @@ const CONFIG_PATH = ".labctl/config.yml"
 const CONFIG_ENV_OVERRIDE = "LABCTL_CONFIG"
 
 type Config struct {
-	LXC LXCConfig          `yaml:"lxc"`
+	LXD LXDConfig          `yaml:"lxd"`
 	DO  DigitalOceanConfig `yaml:"do"`
 }
 
-type LXCConfig struct {
+type LXDConfig struct {
 	Server struct {
 		Addr     string `yaml:"addr"`
 		Password string `yaml:"password"`
