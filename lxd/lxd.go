@@ -1,4 +1,4 @@
-package lxc
+package lxd
 
 import (
 	"context"
@@ -20,7 +20,8 @@ const (
 )
 
 type (
-	LXCBuilder struct {
+	// FlaskManager is used to manage flasks via LXD
+	FlaskManager struct {
 		logger *zap.SugaredLogger
 		client *lxd.InstanceServer
 	}
@@ -37,8 +38,9 @@ func fileExists(path string, logger *zap.SugaredLogger) bool {
 	}
 }
 
-func NewLXCBuilder(ctx context.Context, logger *zap.SugaredLogger) (*LXCBuilder, error) {
-
+// NewFlaskManager creates a new flask manager
+// It can create and manage flasks via a LXD server
+func NewFlaskManager(ctx context.Context, logger *zap.SugaredLogger) (*FlaskManager, error) {
 	logger.Info("Verifying TLS certificates existence")
 
 	if !fileExists(TLS_CERTIFICATE_PATH, logger) || !fileExists(TLS_KEY_PATH, logger) {
@@ -99,7 +101,7 @@ func NewLXCBuilder(ctx context.Context, logger *zap.SugaredLogger) (*LXCBuilder,
 		}
 	}
 
-	return &LXCBuilder{
+	return &FlaskManager{
 		client: &client,
 		logger: logger,
 	}, nil
