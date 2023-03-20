@@ -2,7 +2,7 @@ package flask
 
 import (
 	"github.com/deviantony/labctl/display"
-	"github.com/deviantony/labctl/do"
+	"github.com/deviantony/labctl/lxd"
 	"github.com/deviantony/labctl/types"
 )
 
@@ -11,7 +11,11 @@ type LsCommand struct{}
 
 // Run executes the ls command.
 func (cmd *LsCommand) Run(cmdCtx types.CommandExecutionContext) error {
-	flaskManager := do.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
+	// flaskManager := do.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
+	flaskManager, err := lxd.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.LXD, cmdCtx.Logger)
+	if err != nil {
+		return err
+	}
 
 	flasks, err := flaskManager.ListFlasks()
 	if err != nil {

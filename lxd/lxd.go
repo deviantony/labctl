@@ -7,6 +7,7 @@ import (
 
 	"github.com/deviantony/labctl/config"
 	"github.com/deviantony/labctl/tls"
+	"github.com/deviantony/labctl/types"
 	lxd "github.com/lxc/lxd/client"
 	"github.com/lxc/lxd/shared/api"
 	"go.uber.org/zap"
@@ -98,4 +99,27 @@ func NewFlaskManager(ctx context.Context, cfg config.LXDConfig, logger *zap.Suga
 		client: &client,
 		logger: logger,
 	}, nil
+}
+
+// ListFlasks lists all the flasks running in DigitalOcean (inside a specific project)
+func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
+	flasks := []types.Flask{}
+
+	instances, err := (*manager.client).GetInstances(api.InstanceTypeContainer)
+	if err != nil {
+		manager.logger.Errorf("Unable to send certificate trust request: %s", err)
+		return flasks, err
+	}
+
+	for _, instance := range instances {
+		flasks = append(flasks, types.Flask{
+			ID:     0,
+			Name:   instance.Name,
+			Region: "-",
+			Size:   "-",
+			Ipv4:   "-",
+		})
+	}
+
+	return flasks, nil
 }

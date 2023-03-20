@@ -5,8 +5,8 @@ lxd:
   server:
     addr: https://homesrv.local:8443
     password: pwd
-  key: data/cert.pem
-  cert: data/key.pem
+  cert: data/cert.pem
+  key: data/key.pem
 
 do:
   apiToken: 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
