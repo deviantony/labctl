@@ -118,7 +118,7 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 
 			for _, tag := range droplet.Tags {
 				if tag == LABCTL_FLASK_TAG {
-					v := types.Flask{
+					flask := types.Flask{
 						ID:     dropletID,
 						Name:   droplet.Name,
 						Region: droplet.Region.Slug,
@@ -126,12 +126,12 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 					}
 
 					if len(droplet.Networks.V4) > 0 {
-						v.Ipv4 = droplet.Networks.V4[0].IPAddress
+						flask.Ipv4 = droplet.Networks.V4[0].IPAddress
 					} else {
-						v.Ipv4 = "-"
+						flask.Ipv4 = "-"
 					}
 
-					flasks = append(flasks, v)
+					flasks = append(flasks, flask)
 					break
 				}
 			}
