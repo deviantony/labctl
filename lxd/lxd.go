@@ -3,7 +3,6 @@ package lxd
 import (
 	"context"
 	"errors"
-	"io/ioutil"
 	"os"
 
 	"github.com/deviantony/labctl/tls"
@@ -55,13 +54,13 @@ func NewFlaskManager(ctx context.Context, logger *zap.SugaredLogger) (*FlaskMana
 		logger.Info("TLS certificate and key available, skipping generation")
 	}
 
-	clientCertBytes, err := ioutil.ReadFile(TLS_CERTIFICATE_PATH)
+	clientCertBytes, err := os.ReadFile(TLS_CERTIFICATE_PATH)
 	if err != nil {
 		logger.Errorf("Unable to read client certificate: %s", err)
 		return nil, err
 	}
 
-	clientKeyBytes, err := ioutil.ReadFile(TLS_KEY_PATH)
+	clientKeyBytes, err := os.ReadFile(TLS_KEY_PATH)
 	if err != nil {
 		logger.Errorf("Unable to read client key: %s", err)
 		return nil, err
