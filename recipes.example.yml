@@ -9,3 +9,13 @@ recipes:
     steps:
       - curl https://anthony.portainer.io/docker-portainer | bash
       - ... # any other step to add / automate
+
+  portainer-device:
+    base: ubuntu-2204
+    # the files that must be packaged with the recipe
+    files:
+      - /etc/portainer-agent
+      - /var/lib/portainer-agent
+    steps:
+      - curl https://anthony.portainer.io/docker-portainer | bash
+      - ... # any other step to add / automate
