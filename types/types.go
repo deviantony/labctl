@@ -13,9 +13,14 @@ const VERSION = "0.2.0-dev"
 type Flask struct {
 	ID     int
 	Name   string
+	Config FlaskConfig
+	Ipv4   string
+}
+
+// FlaskConfig holds the configuration for a flask
+type FlaskConfig struct {
 	Region string
 	Size   string
-	Ipv4   string
 }
 
 // CommandExecutionContext holds the context and logger for a command execution.

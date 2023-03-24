@@ -11,6 +11,7 @@ type LsCommand struct{}
 
 // Run executes the ls command.
 func (cmd *LsCommand) Run(cmdCtx types.CommandExecutionContext) error {
+
 	// flaskManager := do.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
 	flaskManager, err := lxd.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.LXD, cmdCtx.Logger)
 	if err != nil {

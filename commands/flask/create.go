@@ -3,7 +3,7 @@ package flask
 import (
 	"github.com/alecthomas/kong"
 	"github.com/deviantony/labctl/display"
-	"github.com/deviantony/labctl/do"
+	"github.com/deviantony/labctl/lxd"
 	"github.com/deviantony/labctl/random"
 	"github.com/deviantony/labctl/ssh"
 	"github.com/deviantony/labctl/types"
@@ -44,27 +44,38 @@ func (cmd *CreateCommand) Run(cmdCtx types.CommandExecutionContext) error {
 		"Auto remove", cmd.AutoRemove && !cmd.Background,
 	)
 
-	flaskManager := do.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
-
-	flaskID, err := flaskManager.CreateFlask(flaskName, cmd.Region, cmd.Size)
+	// flaskManager := do.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
+	flaskManager, err := lxd.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.LXD, cmdCtx.Logger)
 	if err != nil {
 		return err
 	}
 
-	flaskIP, err := flaskManager.WaitUntilFlaskIsReady(flaskID)
+	flaskCfg := types.FlaskConfig{
+		Size: cmd.Size,
+		// Region: cmd.Region, // Only for DO
+	}
+
+	flask, err := flaskManager.CreateFlask(flaskName, flaskCfg)
 	if err != nil {
 		return err
 	}
+
+	// Only for DO
+	// LXD process is synchronous
+	// flaskIP, err := flaskManager.WaitUntilFlaskIsReady(flaskID)
+	// if err != nil {
+	// 	return err
+	// }
 
 	if cmd.Background {
 		cmdCtx.Logger.Infow("Flask created",
-			"ID", flaskID,
-			"IP", flaskIP,
+			"ID", flask.ID,
+			"IP", flask.Ipv4,
 		)
 		return nil
 	}
 
-	err = ssh.ExecuteSSHSession(cmdCtx.Logger, flaskIP)
+	err = ssh.ExecuteSSHSession(cmdCtx.Logger, flask.Ipv4)
 	if err != nil {
 		return err
 	}
@@ -74,5 +85,5 @@ func (cmd *CreateCommand) Run(cmdCtx types.CommandExecutionContext) error {
 	}
 
 	cmdCtx.Logger.Infow("Automatically removing flask")
-	return flaskManager.RemoveFlask(flaskID)
+	return flaskManager.RemoveFlask(flask)
 }

@@ -17,7 +17,7 @@ type (
 	// FlaskManager is used to manage flasks via LXD
 	FlaskManager struct {
 		logger *zap.SugaredLogger
-		client *lxd.InstanceServer
+		client lxd.InstanceServer
 	}
 )
 
@@ -96,7 +96,7 @@ func NewFlaskManager(ctx context.Context, cfg config.LXDConfig, logger *zap.Suga
 	}
 
 	return &FlaskManager{
-		client: &client,
+		client: client,
 		logger: logger,
 	}, nil
 }
@@ -105,7 +105,7 @@ func NewFlaskManager(ctx context.Context, cfg config.LXDConfig, logger *zap.Suga
 func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 	flasks := []types.Flask{}
 
-	instances, err := (*manager.client).GetInstances(api.InstanceTypeContainer)
+	instances, err := manager.client.GetInstances(api.InstanceTypeContainer)
 	if err != nil {
 		manager.logger.Errorf("Unable to send certificate trust request: %s", err)
 		return flasks, err
@@ -113,13 +113,48 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 
 	for _, instance := range instances {
 		flasks = append(flasks, types.Flask{
-			ID:     0,
-			Name:   instance.Name,
-			Region: "-",
-			Size:   "-",
-			Ipv4:   "-",
+			ID:   0,
+			Name: instance.Name,
+			Config: types.FlaskConfig{
+				Region: "-",
+				Size:   "-",
+			},
+			Ipv4: "-",
 		})
 	}
 
 	return flasks, nil
+}
+
+// CreateFlask creates a new flask
+func (manager *FlaskManager) CreateFlask(name string, cfg types.FlaskConfig) (types.Flask, error) {
+	flask := types.Flask{}
+
+	err := manager.createLXDInstance(name, "flask-docker", "labctl-flask")
+	if err != nil {
+		return flask, err
+	}
+
+	dockerVolumeName := "docker-" + name
+	err = manager.createLXDStorageVolume("storage-docker", dockerVolumeName, "5GB")
+	if err != nil {
+		return flask, err
+	}
+
+	err = manager.attachLXDVolumeToInstance("storage-docker", dockerVolumeName, name, "/var/lib/docker")
+	if err != nil {
+		return flask, err
+	}
+
+	err = manager.startLXDInstance(name)
+	if err != nil {
+		return flask, err
+	}
+
+	return flask, nil
+}
+
+// RemoveFlask deletes a flask
+func (manager *FlaskManager) RemoveFlask(flask types.Flask) error {
+	return nil
 }

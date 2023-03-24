@@ -119,10 +119,12 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 			for _, tag := range droplet.Tags {
 				if tag == LABCTL_FLASK_TAG {
 					flask := types.Flask{
-						ID:     dropletID,
-						Name:   droplet.Name,
-						Region: droplet.Region.Slug,
-						Size:   droplet.Size.Slug,
+						ID:   dropletID,
+						Name: droplet.Name,
+						Config: types.FlaskConfig{
+							Region: droplet.Region.Slug,
+							Size:   droplet.Size.Slug,
+						},
 					}
 
 					if len(droplet.Networks.V4) > 0 {

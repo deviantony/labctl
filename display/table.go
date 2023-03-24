@@ -13,8 +13,8 @@ func DisplayFlaskList(flasks []types.Flask) {
 	t.SetOutputMirror(os.Stdout)
 	t.AppendHeader(table.Row{"ID", "Name", "IPv4", "Region", "Size"})
 
-	for _, v := range flasks {
-		t.AppendRow(table.Row{v.ID, v.Name, v.Ipv4, v.Region, v.Size})
+	for _, flask := range flasks {
+		t.AppendRow(table.Row{flask.ID, flask.Name, flask.Ipv4, flask.Config.Region, flask.Config.Size})
 	}
 
 	t.Render()
