@@ -21,8 +21,9 @@ type LXDConfig struct {
 		Password string `yaml:"password"`
 	} `yaml:"server"`
 
-	Key  string `yaml:"key"`
-	Cert string `yaml:"cert"`
+	Key          string `yaml:"key"`
+	Cert         string `yaml:"cert"`
+	SSHPublicKey string `yaml:"sshPublicKey"`
 }
 
 type DigitalOceanConfig struct {

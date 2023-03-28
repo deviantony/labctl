@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"os"
+	"time"
 
 	"github.com/deviantony/labctl/config"
 	"github.com/deviantony/labctl/tls"
@@ -11,12 +12,14 @@ import (
 	lxd "github.com/lxc/lxd/client"
 	"github.com/lxc/lxd/shared/api"
 	"go.uber.org/zap"
+	"k8s.io/apimachinery/pkg/util/wait"
 )
 
 type (
 	// FlaskManager is used to manage flasks via LXD
 	FlaskManager struct {
 		logger *zap.SugaredLogger
+		cfg    config.LXDConfig
 		client lxd.InstanceServer
 	}
 )
@@ -98,6 +101,7 @@ func NewFlaskManager(ctx context.Context, cfg config.LXDConfig, logger *zap.Suga
 	return &FlaskManager{
 		client: client,
 		logger: logger,
+		cfg:    cfg,
 	}, nil
 }
 
@@ -126,7 +130,48 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 	return flasks, nil
 }
 
-// CreateFlask creates a new flask
+// GetFlask returns a flask by ID
+// It will wait till the flask is ready to be used
+// func (manager *FlaskManager) GetFlask(flask types.Flask) (types.Flask, error) {
+// 	flask := types.Flask{}
+
+// 	return flask, nil
+// }
+
+func (manager *FlaskManager) WaitUntilFlaskIsReady(flask *types.Flask) error {
+	return wait.PollImmediate(time.Duration(5*time.Second), time.Duration(1*time.Minute), func() (bool, error) {
+		instanceState, err := manager.getLXDInstanceState(flask.Name)
+		if err != nil {
+			return false, err
+		}
+
+		if instanceState.Status == "Running" {
+			net, ok := instanceState.Network["eth0"]
+			if !ok {
+				manager.logger.Infow("Waiting for flask to have an IP address")
+				return false, nil
+			}
+
+			for _, address := range net.Addresses {
+				if address.Family == "inet" {
+					flask.Ipv4 = address.Address
+					return true, nil
+				}
+			}
+
+			manager.logger.Infow("Waiting for flask to have an IP address")
+			return false, nil
+		} else {
+			manager.logger.Infow("Waiting for flask to be active",
+				"status", instanceState.Status,
+			)
+			return false, nil
+		}
+	})
+}
+
+// CreateFlask creates a new flask and returns its ID
+// We use the PID of the instance as the ID
 func (manager *FlaskManager) CreateFlask(name string, cfg types.FlaskConfig) (types.Flask, error) {
 	flask := types.Flask{}
 
@@ -146,15 +191,42 @@ func (manager *FlaskManager) CreateFlask(name string, cfg types.FlaskConfig) (ty
 		return flask, err
 	}
 
+	sshPubKey, err := os.ReadFile(manager.cfg.SSHPublicKey)
+	if err != nil {
+		manager.logger.Errorw("Unable to open SSH public key file",
+			"error", err,
+		)
+
+		return flask, err
+	}
+
+	err = manager.createFileInLXDInstance(name, "/root/.ssh/authorized_keys", sshPubKey)
+	if err != nil {
+		return flask, err
+	}
+
 	err = manager.startLXDInstance(name)
 	if err != nil {
 		return flask, err
 	}
+
+	instanceState, err := manager.getLXDInstanceState(name)
+	if err != nil {
+		return flask, err
+	}
+
+	flask.Name = name
+	flask.ID = int(instanceState.Pid)
 
 	return flask, nil
 }
 
 // RemoveFlask deletes a flask
 func (manager *FlaskManager) RemoveFlask(flask types.Flask) error {
-	return nil
+	err := manager.stopLXDInstance(flask.Name)
+	if err != nil {
+		return err
+	}
+
+	return manager.removeLXDInstance(flask.Name)
 }

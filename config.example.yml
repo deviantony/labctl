@@ -7,6 +7,7 @@ lxd:
     password: pwd
   cert: data/cert.pem
   key: data/key.pem
+  sshPublicKey: data/id_rsa.pub
 
 do:
   apiToken: 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef

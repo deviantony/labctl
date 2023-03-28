@@ -60,8 +60,11 @@ func (cmd *CreateCommand) Run(cmdCtx types.CommandExecutionContext) error {
 		return err
 	}
 
-	// Only for DO
-	// LXD process is synchronous
+	err = flaskManager.WaitUntilFlaskIsReady(&flask)
+	if err != nil {
+		return err
+	}
+
 	// flaskIP, err := flaskManager.WaitUntilFlaskIsReady(flaskID)
 	// if err != nil {
 	// 	return err

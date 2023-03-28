@@ -1,6 +1,11 @@
 package lxd
 
-import "github.com/lxc/lxd/shared/api"
+import (
+	"bytes"
+
+	lxd "github.com/lxc/lxd/client"
+	"github.com/lxc/lxd/shared/api"
+)
 
 func (manager *FlaskManager) createLXDStorageVolume(pool, volume, size string) error {
 	createVolumeReq := api.StorageVolumesPost{
@@ -24,6 +29,32 @@ func (manager *FlaskManager) createLXDStorageVolume(pool, volume, size string) e
 	}
 
 	return nil
+}
+
+func (manager *FlaskManager) createFileInLXDInstance(name, path string, content []byte) error {
+	createFileReq := lxd.InstanceFileArgs{
+		Content:   bytes.NewReader(content),
+		UID:       0,
+		GID:       0,
+		Mode:      0600,
+		Type:      "file",
+		WriteMode: "overwrite",
+	}
+
+	return manager.client.CreateInstanceFile(name, path, createFileReq)
+}
+
+func (manager *FlaskManager) getLXDInstanceState(name string) (*api.InstanceState, error) {
+	instanceState, _, err := manager.client.GetInstanceState(name)
+	if err != nil {
+		manager.logger.Errorw("Unable to get LXD instance state",
+			"error", err,
+		)
+
+		return nil, err
+	}
+
+	return instanceState, nil
 }
 
 func (manager *FlaskManager) attachLXDVolumeToInstance(poolName, volumeName, instanceName, path string) error {
@@ -121,6 +152,57 @@ func (manager *FlaskManager) startLXDInstance(name string) error {
 		)
 
 		return err
+	}
+
+	return nil
+}
+
+func (manager *FlaskManager) stopLXDInstance(name string) error {
+	stopInstanceReq := api.InstanceStatePut{
+		Action:  "stop",
+		Timeout: 10,
+	}
+
+	op, err := manager.client.UpdateInstanceState(name, stopInstanceReq, "")
+	if err != nil {
+		manager.logger.Errorw("Unable to stop LXD instance",
+			"error", err,
+		)
+
+		return err
+	}
+
+	err = op.Wait()
+	if err != nil {
+		manager.logger.Errorw("An error occured while waiting for the LXD instance stop operation to complete",
+			"error", err,
+		)
+
+		return err
+	}
+
+	return nil
+}
+
+func (manager *FlaskManager) removeLXDInstance(name string) error {
+	op, err := manager.client.DeleteInstance(name)
+	if err != nil {
+		if err != nil {
+			manager.logger.Errorw("Unable to delete LXD instance",
+				"error", err,
+			)
+
+			return err
+		}
+
+		err = op.Wait()
+		if err != nil {
+			manager.logger.Errorw("An error occured while waiting for the LXD instance delete operation to complete",
+				"error", err,
+			)
+
+			return err
+		}
 	}
 
 	return nil
