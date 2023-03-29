@@ -36,7 +36,7 @@ func NewFlaskManager(ctx context.Context, cfg config.LXDConfig, logger *zap.Suga
 	if !filesystem.FileExists(cfg.Client.Cert, logger) || !filesystem.FileExists(cfg.Client.Key, logger) {
 		logger.Debug("Unable to locate TLS certificate and key, generating new ones")
 
-		err := tls.GenerateSelfSignedTLSCertificates(logger, cfg.Client.Cert, cfg.Client.Key)
+		err := tls.GenerateSelfSignedTLSCertificates(logger, cfg.Client.Key, cfg.Client.Cert)
 		if err != nil {
 			logger.Errorf("Unable to generate TLS certificates: %s", err)
 			return nil, err
