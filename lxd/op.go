@@ -183,7 +183,7 @@ func (manager *FlaskManager) removeLXDInstance(name string) error {
 func (manager *FlaskManager) startLXDInstance(name string) error {
 	startInstanceReq := api.InstanceStatePut{
 		Action:  "start",
-		Timeout: 10,
+		Timeout: int(manager.cfg.Client.Timeout.Seconds()),
 	}
 
 	op, err := manager.client.UpdateInstanceState(name, startInstanceReq, "")
@@ -210,7 +210,7 @@ func (manager *FlaskManager) startLXDInstance(name string) error {
 func (manager *FlaskManager) stopLXDInstance(name string) error {
 	stopInstanceReq := api.InstanceStatePut{
 		Action:  "stop",
-		Timeout: 10,
+		Timeout: int(manager.cfg.Client.Timeout.Seconds()),
 	}
 
 	op, err := manager.client.UpdateInstanceState(name, stopInstanceReq, "")

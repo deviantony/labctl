@@ -21,8 +21,12 @@ type LXDConfig struct {
 		Password string `yaml:"password"`
 	} `yaml:"server"`
 
-	Key          string `yaml:"key"`
-	Cert         string `yaml:"cert"`
+	Client struct {
+		Cert    string        `yaml:"cert"`
+		Key     string        `yaml:"key"`
+		Timeout time.Duration `yaml:"timeout"`
+	} `yaml:"client"`
+
 	SSHPublicKey string `yaml:"sshPublicKey"`
 }
 

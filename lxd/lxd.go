@@ -33,10 +33,10 @@ type (
 func NewFlaskManager(ctx context.Context, cfg config.LXDConfig, logger *zap.SugaredLogger) (*FlaskManager, error) {
 	logger.Debug("Verifying TLS certificates existence")
 
-	if !filesystem.FileExists(cfg.Cert, logger) || !filesystem.FileExists(cfg.Key, logger) {
+	if !filesystem.FileExists(cfg.Client.Cert, logger) || !filesystem.FileExists(cfg.Client.Key, logger) {
 		logger.Debug("Unable to locate TLS certificate and key, generating new ones")
 
-		err := tls.GenerateSelfSignedTLSCertificates(logger, cfg.Cert, cfg.Key)
+		err := tls.GenerateSelfSignedTLSCertificates(logger, cfg.Client.Cert, cfg.Client.Key)
 		if err != nil {
 			logger.Errorf("Unable to generate TLS certificates: %s", err)
 			return nil, err
@@ -45,13 +45,13 @@ func NewFlaskManager(ctx context.Context, cfg config.LXDConfig, logger *zap.Suga
 		logger.Debug("TLS certificate and key available, skipping generation")
 	}
 
-	clientCertBytes, err := os.ReadFile(cfg.Cert)
+	clientCertBytes, err := os.ReadFile(cfg.Client.Cert)
 	if err != nil {
 		logger.Errorf("Unable to read client certificate: %s", err)
 		return nil, err
 	}
 
-	clientKeyBytes, err := os.ReadFile(cfg.Key)
+	clientKeyBytes, err := os.ReadFile(cfg.Client.Key)
 	if err != nil {
 		logger.Errorf("Unable to read client key: %s", err)
 		return nil, err
@@ -249,7 +249,7 @@ func (manager *FlaskManager) WaitUntilFlaskIsReady(flask *types.Flask) error {
 
 	flask.LXD.ID = instance.Config[TAG_FLASKID]
 
-	return wait.PollImmediate(time.Duration(5*time.Second), time.Duration(1*time.Minute), func() (bool, error) {
+	return wait.PollImmediate(time.Duration(3*time.Second), manager.cfg.Client.Timeout, func() (bool, error) {
 		instanceState, err := manager.getLXDInstanceState(flask.Name)
 		if err != nil {
 			return false, err
