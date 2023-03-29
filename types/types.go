@@ -1,6 +1,6 @@
 package types
 
-const VERSION = "0.2.0"
+const VERSION = "0.2.1"
 
 // A flask is an environment that can run in LXC or in the cloud
 type Flask struct {
