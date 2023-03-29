@@ -11,14 +11,22 @@ const VERSION = "0.2.0-dev"
 
 // A flask is an environment that can run in LXC or in the cloud
 type Flask struct {
-	ID     int
-	Name   string
-	Config FlaskConfig
-	Ipv4   string
+	Name string
+	Ipv4 string
+	LXD  LXDProperties
+	DO   DOProperties
 }
 
-// FlaskConfig holds the configuration for a flask
-type FlaskConfig struct {
+// LXDProperties holds the LXD specific properties for a flask
+type LXDProperties struct {
+	ID       string
+	Status   string
+	Profiles []string
+}
+
+// DOProperties holds the DigitalOcean specific properties for a flask
+type DOProperties struct {
+	ID     int
 	Region string
 	Size   string
 }

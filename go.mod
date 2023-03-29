@@ -5,6 +5,7 @@ go 1.20
 require (
 	github.com/alecthomas/kong v0.6.1
 	github.com/digitalocean/godo v1.81.0
+	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/jedib0t/go-pretty/v6 v6.3.8
 	github.com/lxc/lxd v0.0.0-20230222203621-cc8422591948
 	go.uber.org/zap v1.21.0

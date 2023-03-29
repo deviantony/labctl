@@ -50,12 +50,12 @@ func (cmd *CreateCommand) Run(cmdCtx types.CommandExecutionContext) error {
 		return err
 	}
 
-	flaskCfg := types.FlaskConfig{
-		Size: cmd.Size,
-		// Region: cmd.Region, // Only for DO
-	}
+	// flaskCfg := types.FlaskConfig{
+	// 	Size:   cmd.Size,
+	// 	Region: cmd.Region,
+	// } // Only for DO
 
-	flask, err := flaskManager.CreateFlask(flaskName, flaskCfg)
+	flask, err := flaskManager.CreateFlask(flaskName)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (cmd *CreateCommand) Run(cmdCtx types.CommandExecutionContext) error {
 
 	if cmd.Background {
 		cmdCtx.Logger.Infow("Flask created",
-			"ID", flask.ID,
+			"ID", flask.LXD.ID,
 			"IP", flask.Ipv4,
 		)
 		return nil

@@ -3,59 +3,10 @@ package lxd
 import (
 	"bytes"
 
+	"github.com/gofrs/uuid"
 	lxd "github.com/lxc/lxd/client"
 	"github.com/lxc/lxd/shared/api"
 )
-
-func (manager *FlaskManager) createLXDStorageVolume(pool, volume, size string) error {
-	createVolumeReq := api.StorageVolumesPost{
-		StorageVolumePut: api.StorageVolumePut{
-			Config: map[string]string{
-				"size": size,
-			},
-		},
-		Name:        volume,
-		ContentType: "filesystem",
-		Type:        "custom",
-	}
-
-	err := manager.client.CreateStoragePoolVolume(pool, createVolumeReq)
-	if err != nil {
-		manager.logger.Errorw("Unable to create LXD storage volume",
-			"error", err,
-		)
-
-		return err
-	}
-
-	return nil
-}
-
-func (manager *FlaskManager) createFileInLXDInstance(name, path string, content []byte) error {
-	createFileReq := lxd.InstanceFileArgs{
-		Content:   bytes.NewReader(content),
-		UID:       0,
-		GID:       0,
-		Mode:      0600,
-		Type:      "file",
-		WriteMode: "overwrite",
-	}
-
-	return manager.client.CreateInstanceFile(name, path, createFileReq)
-}
-
-func (manager *FlaskManager) getLXDInstanceState(name string) (*api.InstanceState, error) {
-	instanceState, _, err := manager.client.GetInstanceState(name)
-	if err != nil {
-		manager.logger.Errorw("Unable to get LXD instance state",
-			"error", err,
-		)
-
-		return nil, err
-	}
-
-	return instanceState, nil
-}
 
 func (manager *FlaskManager) attachLXDVolumeToInstance(poolName, volumeName, instanceName, path string) error {
 	instance, _, err := manager.client.GetInstance(instanceName)
@@ -95,10 +46,22 @@ func (manager *FlaskManager) attachLXDVolumeToInstance(poolName, volumeName, ins
 }
 
 func (manager *FlaskManager) createLXDInstance(name, image, profile string) error {
+	id, err := uuid.NewV4()
+	if err != nil {
+		manager.logger.Errorw("Unable to generate UUID",
+			"error", err,
+		)
+
+		return err
+	}
+
 	createInstanceReq := api.InstancesPost{
 		InstancePut: api.InstancePut{
 			Profiles: []string{
 				profile,
+			},
+			Config: map[string]string{
+				"user.flask-id": id.String(),
 			},
 		},
 		Name: name,
@@ -130,6 +93,69 @@ func (manager *FlaskManager) createLXDInstance(name, image, profile string) erro
 	return nil
 }
 
+func (manager *FlaskManager) createLXDStorageVolume(pool, volume, size string) error {
+	createVolumeReq := api.StorageVolumesPost{
+		StorageVolumePut: api.StorageVolumePut{
+			Config: map[string]string{
+				"size": size,
+			},
+		},
+		Name:        volume,
+		ContentType: "filesystem",
+		Type:        "custom",
+	}
+
+	err := manager.client.CreateStoragePoolVolume(pool, createVolumeReq)
+	if err != nil {
+		manager.logger.Errorw("Unable to create LXD storage volume",
+			"error", err,
+		)
+
+		return err
+	}
+
+	return nil
+}
+
+func (manager *FlaskManager) createFileInLXDInstance(name, path string, content []byte) error {
+	createFileReq := lxd.InstanceFileArgs{
+		Content:   bytes.NewReader(content),
+		UID:       0,
+		GID:       0,
+		Mode:      0600,
+		Type:      "file",
+		WriteMode: "overwrite",
+	}
+
+	return manager.client.CreateInstanceFile(name, path, createFileReq)
+}
+
+func (manager *FlaskManager) getLXDInstance(name string) (*api.Instance, error) {
+	instance, _, err := manager.client.GetInstance(name)
+	if err != nil {
+		manager.logger.Errorw("Unable to get LXD instance",
+			"error", err,
+		)
+
+		return nil, err
+	}
+
+	return instance, nil
+}
+
+func (manager *FlaskManager) getLXDInstanceState(name string) (*api.InstanceState, error) {
+	instanceState, _, err := manager.client.GetInstanceState(name)
+	if err != nil {
+		manager.logger.Errorw("Unable to get LXD instance state",
+			"error", err,
+		)
+
+		return nil, err
+	}
+
+	return instanceState, nil
+}
+
 func (manager *FlaskManager) startLXDInstance(name string) error {
 	startInstanceReq := api.InstanceStatePut{
 		Action:  "start",
@@ -148,33 +174,6 @@ func (manager *FlaskManager) startLXDInstance(name string) error {
 	err = op.Wait()
 	if err != nil {
 		manager.logger.Errorw("An error occured while waiting for the LXD instance start operation to complete",
-			"error", err,
-		)
-
-		return err
-	}
-
-	return nil
-}
-
-func (manager *FlaskManager) stopLXDInstance(name string) error {
-	stopInstanceReq := api.InstanceStatePut{
-		Action:  "stop",
-		Timeout: 10,
-	}
-
-	op, err := manager.client.UpdateInstanceState(name, stopInstanceReq, "")
-	if err != nil {
-		manager.logger.Errorw("Unable to stop LXD instance",
-			"error", err,
-		)
-
-		return err
-	}
-
-	err = op.Wait()
-	if err != nil {
-		manager.logger.Errorw("An error occured while waiting for the LXD instance stop operation to complete",
 			"error", err,
 		)
 
@@ -203,6 +202,33 @@ func (manager *FlaskManager) removeLXDInstance(name string) error {
 
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (manager *FlaskManager) stopLXDInstance(name string) error {
+	stopInstanceReq := api.InstanceStatePut{
+		Action:  "stop",
+		Timeout: 10,
+	}
+
+	op, err := manager.client.UpdateInstanceState(name, stopInstanceReq, "")
+	if err != nil {
+		manager.logger.Errorw("Unable to stop LXD instance",
+			"error", err,
+		)
+
+		return err
+	}
+
+	err = op.Wait()
+	if err != nil {
+		manager.logger.Errorw("An error occured while waiting for the LXD instance stop operation to complete",
+			"error", err,
+		)
+
+		return err
 	}
 
 	return nil

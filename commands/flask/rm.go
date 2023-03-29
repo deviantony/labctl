@@ -4,20 +4,23 @@ import (
 	"fmt"
 
 	"github.com/deviantony/labctl/display"
-	"github.com/deviantony/labctl/do"
+	"github.com/deviantony/labctl/lxd"
 	"github.com/deviantony/labctl/types"
 )
 
 // RmCommand removes the given flask - matching an ID or ID prefix.
 type RmCommand struct {
-	ID int `arg:"" help:"Flask ID." name:"Flask ID" optional:""`
+	ID string `arg:"" help:"Flask ID." name:"Flask ID" optional:""`
 }
 
 // Run executes the rm command.
 func (cmd *RmCommand) Run(cmdCtx types.CommandExecutionContext) error {
-	flaskManager := do.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
+	flaskManager, err := lxd.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.LXD, cmdCtx.Logger)
+	if err != nil {
+		return err
+	}
 
-	if cmd.ID == 0 {
+	if cmd.ID == "" {
 		flasks, err := flaskManager.ListFlasks()
 		if err != nil {
 			return err
@@ -35,8 +38,8 @@ func (cmd *RmCommand) Run(cmdCtx types.CommandExecutionContext) error {
 		}
 
 		if confirm {
-			for _, v := range flasks {
-				err := flaskManager.RemoveFlask(v.ID)
+			for _, flask := range flasks {
+				err := flaskManager.RemoveFlask(flask)
 				if err != nil {
 					return err
 				}
@@ -51,5 +54,5 @@ func (cmd *RmCommand) Run(cmdCtx types.CommandExecutionContext) error {
 		return err
 	}
 
-	return flaskManager.RemoveFlask(flask.ID)
+	return flaskManager.RemoveFlask(flask)
 }

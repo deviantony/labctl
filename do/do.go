@@ -54,9 +54,9 @@ func (manager *FlaskManager) GetFlask(id int) (*types.Flask, error) {
 	}
 
 	matches := []types.Flask{}
-	for _, v := range flasks {
-		if strings.HasPrefix(strconv.Itoa(v.ID), strconv.Itoa(id)) {
-			matches = append(matches, v)
+	for _, flask := range flasks {
+		if strings.HasPrefix(strconv.Itoa(flask.DO.ID), strconv.Itoa(id)) {
+			matches = append(matches, flask)
 		}
 	}
 
@@ -119,9 +119,9 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 			for _, tag := range droplet.Tags {
 				if tag == LABCTL_FLASK_TAG {
 					flask := types.Flask{
-						ID:   dropletID,
 						Name: droplet.Name,
-						Config: types.FlaskConfig{
+						DO: types.DOProperties{
+							ID:     dropletID,
 							Region: droplet.Region.Slug,
 							Size:   droplet.Size.Slug,
 						},

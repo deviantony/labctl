@@ -2,19 +2,32 @@ package display
 
 import (
 	"os"
+	"strings"
 
 	"github.com/deviantony/labctl/types"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
 // DisplayFlaskList displays a list of flasks in a table format on the standard output.
-func DisplayFlaskList(flasks []types.Flask) {
+func DisplayCloudFlaskList(flasks []types.Flask) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.AppendHeader(table.Row{"ID", "Name", "IPv4", "Region", "Size"})
 
 	for _, flask := range flasks {
-		t.AppendRow(table.Row{flask.ID, flask.Name, flask.Ipv4, flask.Config.Region, flask.Config.Size})
+		t.AppendRow(table.Row{flask.DO.ID, flask.Name, flask.Ipv4, flask.DO.Region, flask.DO.Size})
+	}
+
+	t.Render()
+}
+
+func DisplayLXDFlaskList(flasks []types.Flask) {
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"ID", "Name", "Status", "IPv4", "Profiles"})
+
+	for _, flask := range flasks {
+		t.AppendRow(table.Row{flask.LXD.ID, flask.Name, flask.LXD.Status, flask.Ipv4, strings.Join(flask.LXD.Profiles, ",")})
 	}
 
 	t.Render()
