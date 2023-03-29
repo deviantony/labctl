@@ -98,9 +98,8 @@ func NewFlaskManager(ctx context.Context, cfg config.LXDConfig, logger *zap.Suga
 	}, nil
 }
 
-// CreateFlask creates a new flask and returns its ID
-// We use the PID of the instance as the ID
-func (manager *FlaskManager) CreateFlask(name string) (types.Flask, error) {
+// CreateFlask creates a new flask
+func (manager *FlaskManager) CreateFlask(name string, cfg types.FlaskConfig) (types.Flask, error) {
 	flask := types.Flask{
 		Name: name,
 	}

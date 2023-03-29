@@ -1,19 +1,17 @@
 package flask
 
 import (
+	"github.com/deviantony/labctl/commands/context"
+	"github.com/deviantony/labctl/config"
 	"github.com/deviantony/labctl/display"
-	"github.com/deviantony/labctl/lxd"
-	"github.com/deviantony/labctl/types"
 )
 
 // LsCommand lists all running flasks.
 type LsCommand struct{}
 
 // Run executes the ls command.
-func (cmd *LsCommand) Run(cmdCtx types.CommandExecutionContext) error {
-
-	// flaskManager := do.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
-	flaskManager, err := lxd.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.LXD, cmdCtx.Logger)
+func (cmd *LsCommand) Run(cmdCtx context.CommandExecutionContext) error {
+	flaskManager, err := context.BuildManagerFromProvider(cmdCtx)
 	if err != nil {
 		return err
 	}
@@ -28,6 +26,11 @@ func (cmd *LsCommand) Run(cmdCtx types.CommandExecutionContext) error {
 		return nil
 	}
 
-	display.DisplayLXDFlasks(flasks)
+	if cmdCtx.Config.GetProvider() == config.PROVIDER_DO {
+		display.DisplayCloudFlasks(flasks)
+	} else {
+		display.DisplayLXDFlasks(flasks)
+	}
+
 	return nil
 }

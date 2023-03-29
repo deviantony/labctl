@@ -20,8 +20,9 @@ func (v VersionFlag) BeforeApply(app *kong.Kong, vars kong.Vars) error {
 
 var CLI struct {
 	// Generic options
-	Debug   bool        `help:"Enable debug mode."`
-	Version VersionFlag `name:"version" help:"Print version information and quit"`
+	Debug    bool        `help:"Enable debug mode."`
+	Provider string      `help:"Provider to use." enum:"do,lxd"  default:"lxd"`
+	Version  VersionFlag `name:"version" help:"Print version information and quit"`
 
 	// Flasks
 	Flask struct {

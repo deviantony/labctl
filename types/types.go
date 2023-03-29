@@ -1,20 +1,6 @@
 package types
 
-import (
-	"context"
-
-	"github.com/deviantony/labctl/config"
-	"go.uber.org/zap"
-)
-
 const VERSION = "0.2.0-dev"
-
-// CommandExecutionContext holds the context and logger for a command execution.
-type CommandExecutionContext struct {
-	Context context.Context
-	Config  config.Config
-	Logger  *zap.SugaredLogger
-}
 
 // A flask is an environment that can run in LXC or in the cloud
 type Flask struct {
@@ -22,6 +8,16 @@ type Flask struct {
 	Ipv4 string
 	LXD  FlaskLXDProperties
 	DO   FlaskDOProperties
+}
+
+// FlaskConfig holds the configuration for creating a flask
+type FlaskConfig struct {
+	// Region is the region where the flask will be created
+	// Only valid for the DigitalOcean provider
+	Region string
+	// Size is the size of the flask
+	// Only valid for the DigitalOcean provider
+	Size string
 }
 
 // FlaskDOProperties holds the DigitalOcean specific properties for a flask
@@ -38,11 +34,11 @@ type FlaskLXDProperties struct {
 	Profiles []string
 }
 
-// NewCommandExecutionContext creates a new command execution context.
-func NewCommandExecutionContext(ctx context.Context, cfg config.Config, logger *zap.SugaredLogger) CommandExecutionContext {
-	return CommandExecutionContext{
-		Context: ctx,
-		Config:  cfg,
-		Logger:  logger,
-	}
+// FlaskManager is the interface that wraps the basic flask management methods.
+type FlaskManager interface {
+	CreateFlask(name string, cfg FlaskConfig) (Flask, error)
+	GetFlask(id string) (Flask, error)
+	ListFlasks() ([]Flask, error)
+	RemoveFlask(flask Flask) error
+	WaitUntilFlaskIsReady(flask *Flask) error
 }

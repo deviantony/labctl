@@ -9,6 +9,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/deviantony/labctl/commands"
+	cmdctx "github.com/deviantony/labctl/commands/context"
 	"github.com/deviantony/labctl/config"
 	"github.com/deviantony/labctl/random"
 	"github.com/deviantony/labctl/types"
@@ -39,8 +40,6 @@ func initializeLogger(debug bool) (*zap.SugaredLogger, error) {
 }
 
 func main() {
-	ctx := context.Background()
-
 	cliCtx := kong.Parse(&commands.CLI,
 		kong.Name("labctl"),
 		kong.Description("Control your lab environment from the command line."),
@@ -69,9 +68,17 @@ func main() {
 		logger.Fatalf("Unable to read configuration file: %s", err)
 	}
 
-	random.NonDeterministicMode()
+	if commands.CLI.Provider == "lxd" {
+		cfg.SetProvider(config.PROVIDER_LXD)
+	} else {
+		cfg.SetProvider(config.PROVIDER_DO)
+	}
+	logger.Infof("Using provider: %s", cfg.GetProvider())
 
-	cmdCtx := types.NewCommandExecutionContext(ctx, cfg, logger)
+	random.NonDeterministicMode()
+	ctx := context.Background()
+
+	cmdCtx := cmdctx.NewCommandExecutionContext(ctx, cfg, logger)
 	err = cliCtx.Run(cmdCtx)
 	cliCtx.FatalIfErrorf(err)
 }

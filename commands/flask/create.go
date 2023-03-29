@@ -2,8 +2,9 @@ package flask
 
 import (
 	"github.com/alecthomas/kong"
+	"github.com/deviantony/labctl/commands/context"
+	"github.com/deviantony/labctl/config"
 	"github.com/deviantony/labctl/display"
-	"github.com/deviantony/labctl/lxd"
 	"github.com/deviantony/labctl/random"
 	"github.com/deviantony/labctl/ssh"
 	"github.com/deviantony/labctl/types"
@@ -26,36 +27,42 @@ type CreateCommand struct {
 	AutoRemove bool              `help:"Automatically removes the flask after SSH session ends." default:"true" negatable:""`
 	Background bool              `help:"Returns the flask ID after creation and do not run a SSH session" short:"d" default:"false"`
 	Name       string            `help:"Name of the flask." short:"n"`
-	Region     string            `help:"Region of the flask." short:"r" enum:"usw,use,eu,ap,nz" default:"eu"`
-	Size       string            `help:"Size of the flask." short:"s" enum:"xs,s,m,l,xl" default:"xs"`
+	Region     string            `help:"Region of the flask (cloud only)." short:"r" enum:"usw,use,eu,ap,nz" default:"eu"`
+	Size       string            `help:"Size of the flask (cloud only)." short:"s" enum:"xs,s,m,l,xl" default:"xs"`
 }
 
 // Run executes the create command.
-func (cmd *CreateCommand) Run(cmdCtx types.CommandExecutionContext) error {
+func (cmd *CreateCommand) Run(cmdCtx context.CommandExecutionContext) error {
+	flaskManager, err := context.BuildManagerFromProvider(cmdCtx)
+	if err != nil {
+		return err
+	}
+
 	flaskName := cmd.Name
 	if flaskName == "" {
 		flaskName = random.GeneratePetName(2, "-")
 	}
 
-	cmdCtx.Logger.Infow("Creating new flask",
-		"Name", flaskName,
-		"Region", cmd.Region,
-		"Size", cmd.Size,
-		"Auto remove", cmd.AutoRemove && !cmd.Background,
-	)
-
-	// flaskManager := do.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.DO, cmdCtx.Logger)
-	flaskManager, err := lxd.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.LXD, cmdCtx.Logger)
-	if err != nil {
-		return err
+	if cmdCtx.Config.GetProvider() == config.PROVIDER_DO {
+		cmdCtx.Logger.Infow("Creating new flask",
+			"Name", flaskName,
+			"Region", cmd.Region,
+			"Size", cmd.Size,
+			"Auto remove", cmd.AutoRemove && !cmd.Background,
+		)
+	} else {
+		cmdCtx.Logger.Infow("Creating new flask",
+			"Name", flaskName,
+			"Auto remove", cmd.AutoRemove && !cmd.Background,
+		)
 	}
 
-	// flaskCfg := types.FlaskConfig{
-	// 	Size:   cmd.Size,
-	// 	Region: cmd.Region,
-	// } // Only for DO
+	flaskCfg := types.FlaskConfig{
+		Size:   cmd.Size,
+		Region: cmd.Region,
+	}
 
-	flask, err := flaskManager.CreateFlask(flaskName)
+	flask, err := flaskManager.CreateFlask(flaskName, flaskCfg)
 	if err != nil {
 		return err
 	}
@@ -65,16 +72,19 @@ func (cmd *CreateCommand) Run(cmdCtx types.CommandExecutionContext) error {
 		return err
 	}
 
-	// flaskIP, err := flaskManager.WaitUntilFlaskIsReady(flaskID)
-	// if err != nil {
-	// 	return err
-	// }
-
 	if cmd.Background {
-		cmdCtx.Logger.Infow("Flask created",
-			"ID", flask.LXD.ID,
-			"IP", flask.Ipv4,
-		)
+		if cmdCtx.Config.GetProvider() == config.PROVIDER_DO {
+			cmdCtx.Logger.Infow("Flask created",
+				"ID", flask.DO.ID,
+				"IP", flask.Ipv4,
+			)
+		} else {
+			cmdCtx.Logger.Infow("Flask created",
+				"ID", flask.LXD.ID,
+				"IP", flask.Ipv4,
+			)
+		}
+
 		return nil
 	}
 

@@ -1,5 +1,4 @@
 # Sample configuration file
-global:
 
 lxd:
   server:

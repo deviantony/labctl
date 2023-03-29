@@ -3,9 +3,8 @@ package flask
 import (
 	"fmt"
 
+	"github.com/deviantony/labctl/commands/context"
 	"github.com/deviantony/labctl/display"
-	"github.com/deviantony/labctl/lxd"
-	"github.com/deviantony/labctl/types"
 )
 
 // RmCommand removes the given flask - matching an ID or ID prefix.
@@ -14,8 +13,8 @@ type RmCommand struct {
 }
 
 // Run executes the rm command.
-func (cmd *RmCommand) Run(cmdCtx types.CommandExecutionContext) error {
-	flaskManager, err := lxd.NewFlaskManager(cmdCtx.Context, cmdCtx.Config.LXD, cmdCtx.Logger)
+func (cmd *RmCommand) Run(cmdCtx context.CommandExecutionContext) error {
+	flaskManager, err := context.BuildManagerFromProvider(cmdCtx)
 	if err != nil {
 		return err
 	}

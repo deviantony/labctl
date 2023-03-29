@@ -35,7 +35,7 @@ type (
 
 // NewFlaskManager creates a new flask manager
 // It can create and manage flasks in DigitalOcean as droplets
-func NewFlaskManager(ctx context.Context, cfg config.DigitalOceanConfig, logger *zap.SugaredLogger) *FlaskManager {
+func NewFlaskManager(ctx context.Context, cfg config.DigitalOceanConfig, logger *zap.SugaredLogger) (*FlaskManager, error) {
 	client := godo.NewFromToken(cfg.APIToken)
 
 	return &FlaskManager{
@@ -43,43 +43,53 @@ func NewFlaskManager(ctx context.Context, cfg config.DigitalOceanConfig, logger 
 		config: cfg,
 		logger: logger,
 		client: client,
-	}
+	}, nil
 }
 
 // CreateFlask creates a new flask as a droplet in DigitalOcean
-func (manager *FlaskManager) CreateFlask(name, region, size string) (int, error) {
-	config := dropletConfig{
-		Name:   name,
-		Region: getRegionFromOption(region),
-		Size:   getSizeFromOption(size),
+func (manager *FlaskManager) CreateFlask(name string, cfg types.FlaskConfig) (types.Flask, error) {
+	flask := types.Flask{
+		Name: name,
 	}
 
-	return manager.createDroplet(config)
+	config := dropletConfig{
+		Name:   name,
+		Region: getRegionFromOption(cfg.Region),
+		Size:   getSizeFromOption(cfg.Size),
+	}
+
+	id, err := manager.createDroplet(config)
+	if err != nil {
+		return flask, err
+	}
+
+	flask.DO.ID = id
+	return flask, nil
 }
 
 // GetFlask retrieves information about a flask based on a given ID or ID prefix
-func (manager *FlaskManager) GetFlask(id int) (*types.Flask, error) {
+func (manager *FlaskManager) GetFlask(id string) (types.Flask, error) {
 	flasks, err := manager.ListFlasks()
 	if err != nil {
-		return nil, err
+		return types.Flask{}, err
 	}
 
 	matches := []types.Flask{}
 	for _, flask := range flasks {
-		if strings.HasPrefix(strconv.Itoa(flask.DO.ID), strconv.Itoa(id)) {
+		if strings.HasPrefix(strconv.Itoa(flask.DO.ID), id) {
 			matches = append(matches, flask)
 		}
 	}
 
 	if len(matches) == 0 {
-		return nil, errors.New("no flask found matching the given ID")
+		return types.Flask{}, errors.New("no flask found matching the given ID")
 	}
 
 	if len(matches) > 1 {
-		return nil, errors.New("multiple flasks found matching the given ID, please be more specific")
+		return types.Flask{}, errors.New("multiple flasks found matching the given ID, please be more specific")
 	}
 
-	return &matches[0], nil
+	return matches[0], nil
 }
 
 // ListFlasks lists all the flasks running in DigitalOcean (inside a specific project)
@@ -155,8 +165,8 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 }
 
 // RemoveFlask removes a flask
-func (manager *FlaskManager) RemoveFlask(id int) error {
-	_, err := manager.client.Droplets.Delete(manager.ctx, id)
+func (manager *FlaskManager) RemoveFlask(flask types.Flask) error {
+	_, err := manager.client.Droplets.Delete(manager.ctx, flask.DO.ID)
 	if err != nil {
 		manager.logger.Errorw("Unable to delete droplet",
 			"error", err,
@@ -166,7 +176,7 @@ func (manager *FlaskManager) RemoveFlask(id int) error {
 	}
 
 	manager.logger.Infow("Flask successfully deleted",
-		"dropletID", id,
+		"dropletID", flask.DO.ID,
 	)
 
 	return nil
@@ -174,12 +184,10 @@ func (manager *FlaskManager) RemoveFlask(id int) error {
 
 // WaitUntilFlaskIsReady waits for a flask to be ready
 // It returns the IP address of the flask when it is ready
-func (manager *FlaskManager) WaitUntilFlaskIsReady(id int) (string, error) {
-	flaskIP := ""
-
-	err := wait.PollImmediate(manager.config.PollInterval, manager.config.PollTimeout,
+func (manager *FlaskManager) WaitUntilFlaskIsReady(flask *types.Flask) error {
+	return wait.PollImmediate(manager.config.PollInterval, manager.config.PollTimeout,
 		func() (bool, error) {
-			droplet, _, err := manager.client.Droplets.Get(manager.ctx, id)
+			droplet, _, err := manager.client.Droplets.Get(manager.ctx, flask.DO.ID)
 			if err != nil {
 				return false, err
 			}
@@ -204,8 +212,9 @@ func (manager *FlaskManager) WaitUntilFlaskIsReady(id int) (string, error) {
 				}
 
 				manager.logger.Infow("Flask is ready")
-				flaskIP = publicIPV4
+				flask.Ipv4 = publicIPV4
 				return true, nil
+
 			} else {
 				manager.logger.Infow("Waiting for flask to be active",
 					"status", droplet.Status,
@@ -214,14 +223,4 @@ func (manager *FlaskManager) WaitUntilFlaskIsReady(id int) (string, error) {
 			}
 		},
 	)
-
-	if err != nil {
-		manager.logger.Errorw("Unable to poll for droplet status",
-			"error", err,
-		)
-
-		return "", err
-	}
-
-	return flaskIP, nil
 }
