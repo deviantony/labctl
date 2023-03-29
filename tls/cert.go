@@ -21,6 +21,7 @@ const (
 	CERT_L   = "Auckland"
 )
 
+// GenerateSelfSignedTLSCertificates generates a self-signed TLS certificate and key
 func GenerateSelfSignedTLSCertificates(logger *zap.SugaredLogger, keyPath, certificatePath string) error {
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(2019),

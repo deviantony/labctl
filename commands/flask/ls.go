@@ -28,6 +28,6 @@ func (cmd *LsCommand) Run(cmdCtx types.CommandExecutionContext) error {
 		return nil
 	}
 
-	display.DisplayLXDFlaskList(flasks)
+	display.DisplayLXDFlasks(flasks)
 	return nil
 }

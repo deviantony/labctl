@@ -8,8 +8,8 @@ import (
 	"github.com/jedib0t/go-pretty/v6/table"
 )
 
-// DisplayFlaskList displays a list of flasks in a table format on the standard output.
-func DisplayCloudFlaskList(flasks []types.Flask) {
+// DisplayCloudFlasks displays a list of cloud based flasks in a table format on the standard output.
+func DisplayCloudFlasks(flasks []types.Flask) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.AppendHeader(table.Row{"ID", "Name", "IPv4", "Region", "Size"})
@@ -21,7 +21,8 @@ func DisplayCloudFlaskList(flasks []types.Flask) {
 	t.Render()
 }
 
-func DisplayLXDFlaskList(flasks []types.Flask) {
+// DisplayLXDFlasks displays a list of LXD based flasks in a table format on the standard output.
+func DisplayLXDFlasks(flasks []types.Flask) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
 	t.AppendHeader(table.Row{"ID", "Name", "Status", "IPv4", "Profiles"})
@@ -33,6 +34,7 @@ func DisplayLXDFlaskList(flasks []types.Flask) {
 	t.Render()
 }
 
+// DisplayOptionList displays a list of CLI options and their DO equivalent.
 func DisplayOptionList() {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)

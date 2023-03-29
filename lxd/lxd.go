@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/deviantony/labctl/config"
+	"github.com/deviantony/labctl/filesystem"
 	"github.com/deviantony/labctl/tls"
 	"github.com/deviantony/labctl/types"
 	lxd "github.com/lxc/lxd/client"
@@ -27,23 +28,12 @@ type (
 	}
 )
 
-func fileExists(path string, logger *zap.SugaredLogger) bool {
-	if _, err := os.Stat(path); err == nil {
-		return true
-	} else if errors.Is(err, os.ErrNotExist) {
-		return false
-	} else {
-		logger.Errorf("An error occurred while checking if the file exists: %s", err)
-		return true
-	}
-}
-
 // NewFlaskManager creates a new flask manager
 // It can create and manage flasks via a LXD server
 func NewFlaskManager(ctx context.Context, cfg config.LXDConfig, logger *zap.SugaredLogger) (*FlaskManager, error) {
 	logger.Debug("Verifying TLS certificates existence")
 
-	if !fileExists(cfg.Cert, logger) || !fileExists(cfg.Key, logger) {
+	if !filesystem.FileExists(cfg.Cert, logger) || !filesystem.FileExists(cfg.Key, logger) {
 		logger.Debug("Unable to locate TLS certificate and key, generating new ones")
 
 		err := tls.GenerateSelfSignedTLSCertificates(logger, cfg.Cert, cfg.Key)
@@ -207,7 +197,7 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 
 		flask := types.Flask{
 			Name: instance.Name,
-			LXD: types.LXDProperties{
+			LXD: types.FlaskLXDProperties{
 				ID:       id,
 				Profiles: instance.Profiles,
 				Status:   instanceState.Status,

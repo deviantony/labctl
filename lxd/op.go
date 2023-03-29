@@ -156,6 +156,30 @@ func (manager *FlaskManager) getLXDInstanceState(name string) (*api.InstanceStat
 	return instanceState, nil
 }
 
+func (manager *FlaskManager) removeLXDInstance(name string) error {
+	op, err := manager.client.DeleteInstance(name)
+	if err != nil {
+		if err != nil {
+			manager.logger.Errorw("Unable to delete LXD instance",
+				"error", err,
+			)
+
+			return err
+		}
+
+		err = op.Wait()
+		if err != nil {
+			manager.logger.Errorw("An error occured while waiting for the LXD instance delete operation to complete",
+				"error", err,
+			)
+
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (manager *FlaskManager) startLXDInstance(name string) error {
 	startInstanceReq := api.InstanceStatePut{
 		Action:  "start",
@@ -178,30 +202,6 @@ func (manager *FlaskManager) startLXDInstance(name string) error {
 		)
 
 		return err
-	}
-
-	return nil
-}
-
-func (manager *FlaskManager) removeLXDInstance(name string) error {
-	op, err := manager.client.DeleteInstance(name)
-	if err != nil {
-		if err != nil {
-			manager.logger.Errorw("Unable to delete LXD instance",
-				"error", err,
-			)
-
-			return err
-		}
-
-		err = op.Wait()
-		if err != nil {
-			manager.logger.Errorw("An error occured while waiting for the LXD instance delete operation to complete",
-				"error", err,
-			)
-
-			return err
-		}
 	}
 
 	return nil

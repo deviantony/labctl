@@ -46,6 +46,17 @@ func NewFlaskManager(ctx context.Context, cfg config.DigitalOceanConfig, logger 
 	}
 }
 
+// CreateFlask creates a new flask as a droplet in DigitalOcean
+func (manager *FlaskManager) CreateFlask(name, region, size string) (int, error) {
+	config := dropletConfig{
+		Name:   name,
+		Region: getRegionFromOption(region),
+		Size:   getSizeFromOption(size),
+	}
+
+	return manager.createDroplet(config)
+}
+
 // GetFlask retrieves information about a flask based on a given ID or ID prefix
 func (manager *FlaskManager) GetFlask(id int) (*types.Flask, error) {
 	flasks, err := manager.ListFlasks()
@@ -120,7 +131,7 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 				if tag == LABCTL_FLASK_TAG {
 					flask := types.Flask{
 						Name: droplet.Name,
-						DO: types.DOProperties{
+						DO: types.FlaskDOProperties{
 							ID:     dropletID,
 							Region: droplet.Region.Slug,
 							Size:   droplet.Size.Slug,
@@ -143,49 +154,22 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 	return flasks, nil
 }
 
-// CreateFlask creates a new flask as a droplet in DigitalOcean
-func (manager *FlaskManager) CreateFlask(name, region, size string) (int, error) {
-	config := dropletConfig{
-		Name:   name,
-		Region: getRegionFromOption(region),
-		Size:   getSizeFromOption(size),
-	}
-
-	return manager.createDroplet(config)
-}
-
-func (manager *FlaskManager) createDroplet(config dropletConfig) (int, error) {
-	createRequest := &godo.DropletCreateRequest{
-		Name:   config.Name,
-		Region: config.Region,
-		Size:   config.Size,
-		Image: godo.DropletCreateImage{
-			Slug: manager.config.BaseImage,
-		},
-		Tags: []string{LABCTL_FLASK_TAG},
-		SSHKeys: []godo.DropletCreateSSHKey{
-			{Fingerprint: manager.config.SSHKeyFingerprint},
-		},
-		Monitoring: true,
-	}
-
-	newDroplet, _, err := manager.client.Droplets.Create(manager.ctx, createRequest)
+// RemoveFlask removes a flask
+func (manager *FlaskManager) RemoveFlask(id int) error {
+	_, err := manager.client.Droplets.Delete(manager.ctx, id)
 	if err != nil {
-		manager.logger.Errorw("Unable to create droplet",
+		manager.logger.Errorw("Unable to delete droplet",
 			"error", err,
 		)
 
-		return 0, err
+		return err
 	}
 
-	_, _, err = manager.client.Projects.AssignResources(manager.ctx, manager.config.ProjectID, newDroplet.URN())
-	if err != nil {
-		manager.logger.Warnw("Unable to assign droplet to project",
-			"error", err,
-		)
-	}
+	manager.logger.Infow("Flask successfully deleted",
+		"dropletID", id,
+	)
 
-	return newDroplet.ID, nil
+	return nil
 }
 
 // WaitUntilFlaskIsReady waits for a flask to be ready
@@ -240,56 +224,4 @@ func (manager *FlaskManager) WaitUntilFlaskIsReady(id int) (string, error) {
 	}
 
 	return flaskIP, nil
-}
-
-// RemoveFlask removes a flask
-func (manager *FlaskManager) RemoveFlask(id int) error {
-	_, err := manager.client.Droplets.Delete(manager.ctx, id)
-	if err != nil {
-		manager.logger.Errorw("Unable to delete droplet",
-			"error", err,
-		)
-
-		return err
-	}
-
-	manager.logger.Infow("Flask successfully deleted",
-		"dropletID", id,
-	)
-
-	return nil
-}
-
-func getRegionFromOption(region string) string {
-	switch region {
-	case "usw":
-		return "sfo1"
-	case "use":
-		return "nyc1"
-	case "eu":
-		return "fra1"
-	case "ap":
-		return "sgp1"
-	case "nz":
-		return "syd1"
-	default:
-		return ""
-	}
-}
-
-func getSizeFromOption(size string) string {
-	switch size {
-	case "xs":
-		return "s-1vcpu-512mb-10gb"
-	case "s":
-		return "s-1vcpu-1gb"
-	case "m":
-		return "s-2vcpu-4gb"
-	case "l":
-		return "s-4vcpu-8gb"
-	case "xl":
-		return "s-8vcpu-16gb"
-	default:
-		return ""
-	}
 }
