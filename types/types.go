@@ -18,6 +18,9 @@ type FlaskConfig struct {
 	// Size is the size of the flask
 	// Only valid for the DigitalOcean provider
 	Size string
+	// Profile is the LXD profile to use for the flask
+	// Only valid for the LXD provider
+	Profile string
 }
 
 // FlaskDOProperties holds the DigitalOcean specific properties for a flask

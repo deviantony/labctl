@@ -23,10 +23,12 @@ const (
 	TAG_FLASKID = "user.flask-id"
 	// BASE_IMAGE is the base image used to create flasks
 	BASE_IMAGE = "flask-docker"
-	// FLASK_PROFILE is the LXD profile used to create flasks
-	FLASK_PROFILE = "labctl-flask-s"
+	// LXD_PROFILE_PREFIX is the prefix used for LXD profiles
+	LXD_PROFILE_PREFIX = "labctl-flask-"
 	// DOCKER_STORAGE is the name of the docker storage
 	DOCKER_STORAGE = "docker-data"
+	// DOCKER_VOLUME_PREFIX is the prefix used for docker volumes
+	DOCKER_VOLUME_PREFIX = "docker-"
 	// DOCKER_VOLUME_SIZE is the size of the docker volume
 	DOCKER_VOLUME_SIZE = "5GB"
 )
@@ -116,12 +118,17 @@ func (manager *FlaskManager) CreateFlask(name string, cfg types.FlaskConfig) (ty
 		Name: name,
 	}
 
-	err := manager.createLXDInstance(name, BASE_IMAGE, FLASK_PROFILE)
+	profile := cfg.Profile
+	if profile == "" {
+		profile = getProfileFromSizeOption(cfg.Size)
+	}
+
+	err := manager.createLXDInstance(name, BASE_IMAGE, profile)
 	if err != nil {
 		return flask, err
 	}
 
-	dockerVolumeName := "docker-" + name
+	dockerVolumeName := DOCKER_VOLUME_PREFIX + name
 	err = manager.createLXDStorageVolume(DOCKER_STORAGE, dockerVolumeName, DOCKER_VOLUME_SIZE)
 	if err != nil {
 		return flask, err

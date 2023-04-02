@@ -27,8 +27,9 @@ type CreateCommand struct {
 	AutoRemove bool              `help:"Automatically removes the flask after SSH session ends." default:"true" negatable:""`
 	Background bool              `help:"Returns the flask ID after creation and do not run a SSH session" short:"d" default:"false"`
 	Name       string            `help:"Name of the flask." short:"n"`
+	Profile    string            `help:"Profile to use for flask creation (lxd only). Overrides the default flask profile." short:"p"`
 	Region     string            `help:"Region of the flask (cloud only)." short:"r" enum:"usw,use,eu,ap,nz" default:"eu"`
-	Size       string            `help:"Size of the flask (cloud only)." short:"s" enum:"xs,s,m,l,xl" default:"xs"`
+	Size       string            `help:"Size of the flask." short:"s" enum:"xs,s,m,l,xl" default:"xs"`
 }
 
 // Run executes the create command.
@@ -53,13 +54,16 @@ func (cmd *CreateCommand) Run(cmdCtx context.CommandExecutionContext) error {
 	} else {
 		cmdCtx.Logger.Infow("Creating new flask",
 			"Name", flaskName,
+			"Size", cmd.Size,
+			"Profile", cmd.Profile,
 			"Auto remove", cmd.AutoRemove && !cmd.Background,
 		)
 	}
 
 	flaskCfg := types.FlaskConfig{
-		Size:   cmd.Size,
-		Region: cmd.Region,
+		Size:    cmd.Size,
+		Region:  cmd.Region,
+		Profile: cmd.Profile,
 	}
 
 	flask, err := flaskManager.CreateFlask(flaskName, flaskCfg)

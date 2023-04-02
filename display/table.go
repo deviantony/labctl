@@ -38,25 +38,25 @@ func DisplayLXDFlasks(flasks []types.Flask) {
 func DisplayOptionList() {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"CLI OPTION", "DO EQUIVALENT"})
+	t.AppendHeader(table.Row{"CLI", "CLOUD", "LXD"})
 
-	t.AppendRow(table.Row{"REGIONS"})
+	t.AppendRow(table.Row{"REGION"})
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"usw", "sfo1"})
-	t.AppendRow(table.Row{"use", "nyc1"})
-	t.AppendRow(table.Row{"eu", "fra1"})
-	t.AppendRow(table.Row{"ap", "sgp1"})
-	t.AppendRow(table.Row{"nz", "syd1"})
+	t.AppendRow(table.Row{"usw", "sfo1", "-"})
+	t.AppendRow(table.Row{"use", "nyc1", "-"})
+	t.AppendRow(table.Row{"eu", "fra1", "-"})
+	t.AppendRow(table.Row{"ap", "sgp1", "-"})
+	t.AppendRow(table.Row{"nz", "syd1", "-"})
 
 	t.AppendSeparator()
-	t.AppendRow(table.Row{"SIZES (https://slugs.do-api.dev/)"})
+	t.AppendRow(table.Row{"SIZE", "https://slugs.do-api.dev/", ""})
 	t.AppendSeparator()
 
-	t.AppendRow(table.Row{"xs", "s-1vcpu-512mb-10gb"})
-	t.AppendRow(table.Row{"s", "s-1vcpu-1gb"})
-	t.AppendRow(table.Row{"m", "s-2vcpu-4gb"})
-	t.AppendRow(table.Row{"l", "s-4vcpu-8gb"})
-	t.AppendRow(table.Row{"xl", "s-8vcpu-16gb"})
+	t.AppendRow(table.Row{"xs", "s-1vcpu-512mb-10gb", "1vcpu-512mb-10gb"})
+	t.AppendRow(table.Row{"s", "s-1vcpu-1gb", "1vcpu-1gb-10gb"})
+	t.AppendRow(table.Row{"m", "s-2vcpu-4gb", "2vcpu-2gb-20gb"})
+	t.AppendRow(table.Row{"l", "s-4vcpu-8gb", "4vcpu-4g-50gb"})
+	t.AppendRow(table.Row{"xl", "s-8vcpu-16gb", "-"})
 
 	t.Render()
 }
