@@ -25,6 +25,8 @@ const (
 	TAG_FLASKID = "user.flask-id"
 	// BASE_IMAGE is the base image used to create flasks
 	BASE_IMAGE = "flask-docker"
+	// DEFAULT_IMAGE_SERVER is the default server used to fetch images
+	DEFAULT_IMAGE_SERVER = "https://images.linuxcontainers.org"
 	// LXD_PROFILE_PREFIX is the prefix used for LXD profiles
 	LXD_PROFILE_PREFIX = "labctl-flask-"
 	// DOCKER_STORAGE is the name of the docker storage
@@ -125,7 +127,12 @@ func (manager *FlaskManager) CreateFlask(name string, cfg types.FlaskConfig) (ty
 		profile = getProfileFromSizeOption(cfg.Size)
 	}
 
-	err := manager.createLXDInstance(name, BASE_IMAGE, profile)
+	image := cfg.Image
+	if image == "" {
+		image = BASE_IMAGE
+	}
+
+	err := manager.createLXDInstance(name, image, profile)
 	if err != nil {
 		return flask, err
 	}
@@ -251,9 +258,20 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 
 // RemoveFlask deletes a flask
 func (manager *FlaskManager) RemoveFlask(flask types.Flask) error {
-	err := manager.stopLXDInstance(flask.Name)
+	manager.logger.Infow("Removing flask",
+		"name", flask.Name,
+	)
+
+	state, err := manager.getLXDInstanceState(flask.Name)
 	if err != nil {
 		return err
+	}
+
+	if state.Status == "Running" {
+		err := manager.stopLXDInstance(flask.Name)
+		if err != nil {
+			return err
+		}
 	}
 
 	err = manager.removeLXDInstance(flask.Name)

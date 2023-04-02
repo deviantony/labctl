@@ -21,6 +21,9 @@ type FlaskConfig struct {
 	// Profile is the LXD profile to use for the flask
 	// Only valid for the LXD provider
 	Profile string
+	// Image is the image to use for the flask
+	// Only valid for the LXD provider
+	Image string
 }
 
 // FlaskDOProperties holds the DigitalOcean specific properties for a flask
