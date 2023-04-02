@@ -180,6 +180,10 @@ func (manager *FlaskManager) removeLXDInstance(name string) error {
 	return nil
 }
 
+func (manager *FlaskManager) removeLXDStorageVolume(pool, volume string) error {
+	return manager.client.DeleteStoragePoolVolume(pool, "custom", volume)
+}
+
 func (manager *FlaskManager) startLXDInstance(name string) error {
 	startInstanceReq := api.InstanceStatePut{
 		Action:  "start",

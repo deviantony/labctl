@@ -3,6 +3,8 @@ package lxd
 import (
 	"context"
 	"errors"
+	"fmt"
+	"net"
 	"os"
 	"strings"
 	"time"
@@ -223,7 +225,7 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 		}
 
 		if instanceState.Status == "Running" {
-			net, ok := instanceState.Network["eth0"]
+			network, ok := instanceState.Network["eth0"]
 			if !ok {
 				manager.logger.Warnw("Unable to retrieve network interface details for flask",
 					"name", instance.Name,
@@ -231,7 +233,7 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 				continue
 			}
 
-			for _, address := range net.Addresses {
+			for _, address := range network.Addresses {
 				if address.Family == "inet" {
 					flask.Ipv4 = address.Address
 					break
@@ -254,7 +256,15 @@ func (manager *FlaskManager) RemoveFlask(flask types.Flask) error {
 		return err
 	}
 
-	return manager.removeLXDInstance(flask.Name)
+	err = manager.removeLXDInstance(flask.Name)
+	if err != nil {
+		return err
+	}
+
+	time.Sleep(3 * time.Second)
+
+	dockerVolumeName := DOCKER_VOLUME_PREFIX + flask.Name
+	return manager.removeLXDStorageVolume(DOCKER_STORAGE, dockerVolumeName)
 }
 
 // WaitUntilFlaskIsReady waits until the flask is ready to be used
@@ -274,15 +284,23 @@ func (manager *FlaskManager) WaitUntilFlaskIsReady(flask *types.Flask) error {
 		}
 
 		if instanceState.Status == "Running" {
-			net, ok := instanceState.Network["eth0"]
+			network, ok := instanceState.Network["eth0"]
 			if !ok {
 				manager.logger.Infow("Waiting for flask to have an IP address")
 				return false, nil
 			}
 
-			for _, address := range net.Addresses {
+			for _, address := range network.Addresses {
 				if address.Family == "inet" {
 					flask.Ipv4 = address.Address
+
+					d := net.Dialer{Timeout: 1 * time.Second}
+					_, err = d.Dial("tcp", fmt.Sprintf("%s:%d", flask.Ipv4, 22))
+					if err != nil {
+						manager.logger.Infow("Waiting for SSH service to be ready")
+						return false, nil
+					}
+
 					return true, nil
 				}
 			}
