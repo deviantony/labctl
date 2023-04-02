@@ -17,7 +17,19 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-const TAG_FLASKID = "user.flask-id"
+const (
+	// TAG_FLASKID is the tag used to identify flasks
+	// It is associated with all LXC containers created via this utility
+	TAG_FLASKID = "user.flask-id"
+	// BASE_IMAGE is the base image used to create flasks
+	BASE_IMAGE = "flask-docker"
+	// FLASK_PROFILE is the LXD profile used to create flasks
+	FLASK_PROFILE = "labctl-flask-s"
+	// DOCKER_STORAGE is the name of the docker storage
+	DOCKER_STORAGE = "docker-data"
+	// DOCKER_VOLUME_SIZE is the size of the docker volume
+	DOCKER_VOLUME_SIZE = "5GB"
+)
 
 type (
 	// FlaskManager is used to manage flasks via LXD
@@ -104,18 +116,18 @@ func (manager *FlaskManager) CreateFlask(name string, cfg types.FlaskConfig) (ty
 		Name: name,
 	}
 
-	err := manager.createLXDInstance(name, "flask-docker", "labctl-flask")
+	err := manager.createLXDInstance(name, BASE_IMAGE, FLASK_PROFILE)
 	if err != nil {
 		return flask, err
 	}
 
 	dockerVolumeName := "docker-" + name
-	err = manager.createLXDStorageVolume("storage-docker", dockerVolumeName, "5GB")
+	err = manager.createLXDStorageVolume(DOCKER_STORAGE, dockerVolumeName, DOCKER_VOLUME_SIZE)
 	if err != nil {
 		return flask, err
 	}
 
-	err = manager.attachLXDVolumeToInstance("storage-docker", dockerVolumeName, name, "/var/lib/docker")
+	err = manager.attachLXDVolumeToInstance(DOCKER_STORAGE, dockerVolumeName, name, "/var/lib/docker")
 	if err != nil {
 		return flask, err
 	}

@@ -10,6 +10,14 @@ curl https://anthony.portainer.io/bin/labctl | sudo bash
 
 ## Usage
 
+### Configuration
+
+Override default configuration:
+
+```
+export LABCTL_CONFIG=/root/workspace/labctl/data/config.yml
+```
+
 ### Lab environments (flasks)
 
 A flask represent a lab environment.
