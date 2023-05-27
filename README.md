@@ -58,7 +58,33 @@ Exec (SSH) into a flask:
 labctl flask exec <flask-id>
 ````
 
+### Access keys and tokens (keyring)
+
+A keyring is a collection of access keys and tokens.
+
+*NOTE*: Keyring is not implemented yet.
+
+Create a new keyring:
+
+````
+labctl keyring create
+````
+
+List existing keyrings:
+
+````
+labctl keyring ls
+````
+
+Remove a keyring:
+
+````
+labctl keyring rm <keyring-id>
+````
+
 ### Recipes
+
+*NOTE*: Recipes are not implemented yet.
 
 Apply a recipe:
 
