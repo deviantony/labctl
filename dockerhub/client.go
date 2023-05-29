@@ -12,11 +12,13 @@ import (
 	"go.uber.org/zap"
 )
 
+// Client is a DockerHub API client.
 type Client struct {
 	timeout time.Duration
 	logger  *zap.SugaredLogger
 }
 
+// NewClient creates a new DockerHub API client.
 func NewClient(timeout time.Duration, logger *zap.SugaredLogger) *Client {
 	return &Client{
 		timeout: timeout,
@@ -24,6 +26,7 @@ func NewClient(timeout time.Duration, logger *zap.SugaredLogger) *Client {
 	}
 }
 
+// AccessToken represents a DockerHub access token.
 type AccessToken struct {
 	Uuid      string    `json:"uuid"`
 	Token     string    `json:"token"`
@@ -33,36 +36,42 @@ type AccessToken struct {
 }
 
 type (
+	// LoginPayload is the payload for the DockerHub API Login endpoint.
 	LoginPayload struct {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
 
+	// LoginResponse is the response for the DockerHub API Login endpoint.
 	LoginResponse struct {
 		TwoFAToken string `json:"login_2fa_token"`
 	}
 
+	// TwoFALoginPayload is the payload for the DockerHub API 2FA Login endpoint.
 	TwoFALoginPayload struct {
 		TwoFAToken string `json:"login_2fa_token"`
 		Code       string `json:"code"`
 	}
 
+	// TwoFALoginResponse is the response for the DockerHub API 2FA Login endpoint.
 	TwoFALoginResponse struct {
 		Token string `json:"token"`
 	}
 
+	// CreateAccessTokenPayload is the payload for the DockerHub API CreateAccessToken endpoint.
 	CreateAccessTokenPayload struct {
 		Label  string   `json:"token_label"`
 		Scopes []string `json:"scopes"`
 	}
 
+	// CreateAccessTokenResponse is the response for the DockerHub API ListAccessToken endpoint.
 	ListAccessTokensResponse struct {
 		Count   int           `json:"count"`
 		Results []AccessToken `json:"results"`
 	}
 )
 
-// ListAccessTokens lists all access tokens for the authenticated user.
+// ListAccessTokens lists all access tokens.
 func (c *Client) ListAccessTokens(token string) ([]AccessToken, error) {
 	url := "https://hub.docker.com/v2/access-tokens"
 

@@ -7,6 +7,7 @@ import (
 	"go.uber.org/zap"
 )
 
+// DockerHubClient is a high-level wrapper around the DockerHub API client.
 type DockerHubClient struct {
 	Username string
 	Password string
@@ -16,6 +17,7 @@ type DockerHubClient struct {
 	logger  *zap.SugaredLogger
 }
 
+// NewDockerHubClient creates a new DockerHub API client.
 func NewDockerHubClient(cfg config.DockerHubConfig, logger *zap.SugaredLogger, twoFACode string) *DockerHubClient {
 	return &DockerHubClient{
 		Username: cfg.Username,
@@ -26,6 +28,7 @@ func NewDockerHubClient(cfg config.DockerHubConfig, logger *zap.SugaredLogger, t
 	}
 }
 
+// ListAccessTokens lists all access tokens.
 func (c *DockerHubClient) ListAccessTokens() ([]AccessToken, error) {
 	client := NewClient(c.timeout, c.logger)
 
