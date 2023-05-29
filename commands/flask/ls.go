@@ -3,7 +3,7 @@ package flask
 import (
 	"github.com/deviantony/labctl/commands/context"
 	"github.com/deviantony/labctl/config"
-	"github.com/deviantony/labctl/display"
+	"github.com/deviantony/labctl/terminal"
 )
 
 // LsCommand lists all running flasks.
@@ -27,9 +27,9 @@ func (cmd *LsCommand) Run(cmdCtx context.CommandExecutionContext) error {
 	}
 
 	if cmdCtx.Config.GetProvider() == config.PROVIDER_DO {
-		display.DisplayCloudFlasks(flasks)
+		terminal.DisplayCloudFlasks(flasks)
 	} else {
-		display.DisplayLXDFlasks(flasks)
+		terminal.DisplayLXDFlasks(flasks)
 	}
 
 	return nil

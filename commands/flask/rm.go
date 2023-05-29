@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/deviantony/labctl/commands/context"
-	"github.com/deviantony/labctl/display"
+	"github.com/deviantony/labctl/terminal"
 )
 
 // RmCommand removes the given flask - matching an ID or ID prefix.
@@ -31,7 +31,7 @@ func (cmd *RmCommand) Run(cmdCtx context.CommandExecutionContext) error {
 		}
 
 		fmt.Printf("Are you sure you want to remove %d flask(s)? y/N\n", len(flasks))
-		confirm, err := display.AskForConfirmation()
+		confirm, err := terminal.AskForConfirmation()
 		if err != nil {
 			return err
 		}

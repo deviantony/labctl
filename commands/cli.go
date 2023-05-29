@@ -5,6 +5,7 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/deviantony/labctl/commands/flask"
+	"github.com/deviantony/labctl/commands/keyring"
 )
 
 // VersionFlag is used to display the version of the CLI.
@@ -32,4 +33,11 @@ var CLI struct {
 		Exec   flask.ExecCommand   `cmd:"" help:"Create a SSH session to the given flask ID."`
 		Rm     flask.RmCommand     `cmd:"" help:"Remove a flask."`
 	} `cmd:"" help:"Manage flasks."`
+
+	// Keyring
+	Keyring struct {
+		Add keyring.AddCommand    `cmd:"" help:"Add a new key to the keyring."`
+		Rm  keyring.RemoveCommand `cmd:"" help:"Remove a key from the keyring."`
+		Ls  keyring.LsCommand     `cmd:"" help:"List keys in the keyring."`
+	} `cmd:"" help:"Manage keyring."`
 }

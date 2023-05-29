@@ -1,0 +1,28 @@
+package keyring
+
+import (
+	"github.com/deviantony/labctl/commands/context"
+	"github.com/deviantony/labctl/dockerhub"
+	"github.com/deviantony/labctl/terminal"
+)
+
+// LsCommand lists all keys in the keyring.
+type LsCommand struct{}
+
+func (cmd *LsCommand) Run(cmdCtx context.CommandExecutionContext) error {
+	code, err := terminal.AskFor2FACode()
+	if err != nil {
+		return err
+	}
+
+	client := dockerhub.NewDockerHubClient(cmdCtx.Config.DockerHub, cmdCtx.Logger, code)
+
+	tokens, err := client.ListAccessTokens()
+	if err != nil {
+		return err
+	}
+
+	terminal.DisplayDockerHubAccessTokens(tokens)
+
+	return nil
+}

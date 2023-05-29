@@ -1,12 +1,27 @@
-package display
+package terminal
 
 import (
 	"os"
 	"strings"
+	"time"
 
+	"github.com/deviantony/labctl/dockerhub"
 	"github.com/deviantony/labctl/types"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
+
+// DisplayDockerHubAccessTokens displays a list of DockerHub access tokens in a table format on the standard output.
+func DisplayDockerHubAccessTokens(tokens []dockerhub.AccessToken) {
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"ID", "Label", "Created", "Last used"})
+
+	for _, token := range tokens {
+		t.AppendRow(table.Row{token.Uuid, token.Label, token.CreatedAt.Format(time.DateOnly), token.LastUsed.Format(time.DateOnly)})
+	}
+
+	t.Render()
+}
 
 // DisplayCloudFlasks displays a list of cloud based flasks in a table format on the standard output.
 func DisplayCloudFlasks(flasks []types.Flask) {

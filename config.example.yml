@@ -1,5 +1,10 @@
 # Sample configuration file
 
+dockerhub:
+  username: deviantony
+  password: my-super-strong-password
+  timeout: 5s
+
 lxd:
   server:
     addr: https://homesrv.local:8443

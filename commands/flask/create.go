@@ -4,9 +4,9 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/deviantony/labctl/commands/context"
 	"github.com/deviantony/labctl/config"
-	"github.com/deviantony/labctl/display"
 	"github.com/deviantony/labctl/random"
 	"github.com/deviantony/labctl/ssh"
+	"github.com/deviantony/labctl/terminal"
 	"github.com/deviantony/labctl/types"
 )
 
@@ -16,7 +16,7 @@ type CreateOptionsFlag bool
 func (o CreateOptionsFlag) Decode(ctx *kong.DecodeContext) error { return nil }
 func (o CreateOptionsFlag) IsBool() bool                         { return true }
 func (o CreateOptionsFlag) BeforeApply(app *kong.Kong, vars kong.Vars) error {
-	display.DisplayOptionList()
+	terminal.DisplayOptionList()
 	app.Exit(0)
 	return nil
 }

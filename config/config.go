@@ -22,10 +22,18 @@ const (
 
 // Config contains the configuration for the labctl application
 type Config struct {
-	DO  DigitalOceanConfig `yaml:"do"`
-	LXD LXDConfig          `yaml:"lxd"`
+	DO        DigitalOceanConfig `yaml:"do"`
+	LXD       LXDConfig          `yaml:"lxd"`
+	DockerHub DockerHubConfig    `yaml:"dockerhub"`
 
 	provider Provider
+}
+
+// DockerHubConfig contains the DockerHub configuration
+type DockerHubConfig struct {
+	Username string        `yaml:"username"`
+	Password string        `yaml:"password"`
+	Timeout  time.Duration `yaml:"timeout"`
 }
 
 // DigitalOceanConfig contains the configuration for the DigitalOcean provider
