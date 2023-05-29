@@ -17,7 +17,12 @@ func DisplayDockerHubAccessTokens(tokens []dockerhub.AccessToken) {
 	t.AppendHeader(table.Row{"ID", "Label", "Created", "Last used"})
 
 	for _, token := range tokens {
-		t.AppendRow(table.Row{token.Uuid, token.Label, token.CreatedAt.Format(time.DateOnly), token.LastUsed.Format(time.DateOnly)})
+		lastUsed := "never"
+		if !token.LastUsed.IsZero() {
+			lastUsed = token.LastUsed.Format(time.DateOnly)
+		}
+
+		t.AppendRow(table.Row{token.Uuid, token.Label, token.CreatedAt.Format(time.DateOnly), lastUsed})
 	}
 
 	t.Render()

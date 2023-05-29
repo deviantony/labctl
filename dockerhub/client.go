@@ -35,6 +35,11 @@ type AccessToken struct {
 	LastUsed  time.Time `json:"last_used"`
 }
 
+const (
+	accessTokenScopeRead  = "repo:read"
+	accessTokenScopeWrite = "repo:write"
+)
+
 type (
 	// LoginPayload is the payload for the DockerHub API Login endpoint.
 	LoginPayload struct {
@@ -70,6 +75,131 @@ type (
 		Results []AccessToken `json:"results"`
 	}
 )
+
+// CreateAccessToken creates a new access token.
+func (c *Client) CreateAccessToken(token, label string) (string, error) {
+	url := "https://hub.docker.com/v2/access-tokens"
+
+	payload := CreateAccessTokenPayload{
+		Label:  label,
+		Scopes: []string{accessTokenScopeRead, accessTokenScopeWrite},
+	}
+
+	jsonPayload, err := json.Marshal(payload)
+	if err != nil {
+		c.logger.Errorw("Unable to marshal JSON for DockerHub API CreateAccessToken payload",
+			"error", err,
+			"url", url,
+		)
+
+		return "", err
+	}
+
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		c.logger.Errorw("Unable to create DockerHub API CreateAccessToken request",
+			"error", err,
+			"url", url,
+		)
+
+		return "", err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	client := &http.Client{
+		Timeout: c.timeout,
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		c.logger.Errorw("Unable to execute DockerHub API CreateAccessToken request",
+			"error", err,
+			"url", url,
+		)
+
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		c.logger.Errorw("Unexpected DockerHub API CreateAccessToken response status",
+			"status_code", resp.StatusCode,
+			"status", resp.Status,
+			"url", url,
+		)
+
+		return "", errors.New("unexpected response status")
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		c.logger.Errorw("Unable to read DockerHub API CreateAccessToken response",
+			"error", err,
+			"url", url,
+		)
+
+		return "", err
+	}
+
+	var responseData AccessToken
+	err = json.Unmarshal(body, &responseData)
+	if err != nil {
+		c.logger.Errorw("Unable to unmarshal JSON for DockerHub API CreateAccessToken response",
+			"error", err,
+			"url", url,
+		)
+
+		return "", err
+	}
+
+	return responseData.Token, nil
+}
+
+// DeleteAccessToken deletes an access token based on the specified UUID.
+func (c *Client) DeleteAccessToken(token, uuid string) error {
+	url := fmt.Sprintf("https://hub.docker.com/v2/access-tokens/%s", uuid)
+
+	req, err := http.NewRequest(http.MethodDelete, url, nil)
+	if err != nil {
+		c.logger.Errorw("Unable to create DockerHub API DeleteAccessToken request",
+			"error", err,
+			"url", url,
+		)
+
+		return err
+	}
+
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+
+	client := &http.Client{
+		Timeout: c.timeout,
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		c.logger.Errorw("Unable to execute DockerHub API DeleteAccessToken request",
+			"error", err,
+			"url", url,
+		)
+
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusAccepted {
+		c.logger.Errorw("Unexpected DockerHub API DeleteAccessToken response status",
+			"status_code", resp.StatusCode,
+			"status", resp.Status,
+			"url", url,
+		)
+
+		return errors.New("unexpected response status")
+	}
+
+	return nil
+}
 
 // ListAccessTokens lists all access tokens.
 func (c *Client) ListAccessTokens(token string) ([]AccessToken, error) {

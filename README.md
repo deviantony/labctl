@@ -62,21 +62,19 @@ labctl flask exec <flask-id>
 
 A keyring is a collection of access keys and tokens.
 
-*NOTE*: Keyring is not implemented yet.
-
-Create a new keyring:
+Add a new key to the keyring:
 
 ````
-labctl keyring create
+labctl keyring add
 ````
 
-List existing keyrings:
+List existing keys:
 
 ````
 labctl keyring ls
 ````
 
-Remove a keyring:
+Remove a key from the keyring:
 
 ````
 labctl keyring rm <keyring-id>

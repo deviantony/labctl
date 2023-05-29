@@ -9,6 +9,7 @@ import (
 // LsCommand lists all keys in the keyring.
 type LsCommand struct{}
 
+// Run executes the ls command.
 func (cmd *LsCommand) Run(cmdCtx context.CommandExecutionContext) error {
 	code, err := terminal.AskFor2FACode()
 	if err != nil {

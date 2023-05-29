@@ -9,6 +9,7 @@ require (
 	github.com/jedib0t/go-pretty/v6 v6.3.8
 	github.com/lxc/lxd v0.0.0-20230222203621-cc8422591948
 	go.uber.org/zap v1.21.0
+	golang.org/x/term v0.8.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.24.3
 )
@@ -40,7 +41,6 @@ require (
 	golang.org/x/net v0.7.0 // indirect
 	golang.org/x/oauth2 v0.0.0-20220411215720-9780585627b5 // indirect
 	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/term v0.8.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
 	gopkg.in/errgo.v1 v1.0.1 // indirect
