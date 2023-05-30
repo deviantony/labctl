@@ -5,7 +5,7 @@ import (
 
 	"github.com/deviantony/labctl/internal/commands/context"
 	"github.com/deviantony/labctl/internal/dockerhub"
-	"github.com/deviantony/labctl/internal/terminal"
+	"github.com/deviantony/labctl/pkg/prompt"
 )
 
 // AddCommand adds a new key to the keyring.
@@ -16,7 +16,7 @@ type AddCommand struct {
 
 // Run executes the add command.
 func (cmd *AddCommand) Run(cmdCtx context.CommandExecutionContext) error {
-	code, err := terminal.AskFor2FACode()
+	code, err := prompt.AskFor2FACode()
 	if err != nil {
 		return err
 	}

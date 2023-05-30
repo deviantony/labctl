@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deviantony/labctl/internal/dockerhub"
+	"github.com/deviantony/labctl/pkg/dockerhub"
 	"github.com/deviantony/labctl/types"
 	"github.com/jedib0t/go-pretty/v6/table"
 )

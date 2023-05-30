@@ -2,7 +2,7 @@ package flask
 
 import (
 	"github.com/deviantony/labctl/internal/commands/context"
-	"github.com/deviantony/labctl/internal/ssh"
+	"github.com/deviantony/labctl/pkg/ssh"
 )
 
 // CpCommand copies a file or a directory to a flask.
@@ -24,5 +24,5 @@ func (cmd *CpCommand) Run(cmdCtx context.CommandExecutionContext) error {
 		return err
 	}
 
-	return ssh.CopyToRemote(cmdCtx.Logger, flask.Ipv4, cmd.LocalPath, cmd.RemotePath)
+	return ssh.CopyToRemote(flask.Ipv4, cmd.LocalPath, cmd.RemotePath)
 }

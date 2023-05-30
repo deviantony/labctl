@@ -3,7 +3,7 @@ package keyring
 import (
 	"github.com/deviantony/labctl/internal/commands/context"
 	"github.com/deviantony/labctl/internal/dockerhub"
-	"github.com/deviantony/labctl/internal/terminal"
+	"github.com/deviantony/labctl/pkg/prompt"
 )
 
 // RemoveCommand removes a key from the keyring.
@@ -13,7 +13,7 @@ type RemoveCommand struct {
 
 // Run executes the rm command.
 func (cmd *RemoveCommand) Run(cmdCtx context.CommandExecutionContext) error {
-	code, err := terminal.AskFor2FACode()
+	code, err := prompt.AskFor2FACode()
 	if err != nil {
 		return err
 	}

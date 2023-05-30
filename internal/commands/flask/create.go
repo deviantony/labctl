@@ -4,9 +4,9 @@ import (
 	"github.com/alecthomas/kong"
 	"github.com/deviantony/labctl/internal/commands/context"
 	"github.com/deviantony/labctl/internal/config"
-	"github.com/deviantony/labctl/internal/ssh"
-	"github.com/deviantony/labctl/internal/terminal"
+	terminal "github.com/deviantony/labctl/internal/display"
 	"github.com/deviantony/labctl/pkg/random"
+	"github.com/deviantony/labctl/pkg/ssh"
 	"github.com/deviantony/labctl/types"
 )
 
@@ -95,7 +95,7 @@ func (cmd *CreateCommand) Run(cmdCtx context.CommandExecutionContext) error {
 		return nil
 	}
 
-	err = ssh.ExecuteSSHSession(cmdCtx.Logger, flask.Ipv4)
+	err = ssh.ExecuteSSHSession(flask.Ipv4)
 	if err != nil {
 		return err
 	}

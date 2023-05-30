@@ -1,4 +1,4 @@
-package terminal
+package prompt
 
 import (
 	"bufio"
@@ -9,6 +9,7 @@ import (
 	"golang.org/x/term"
 )
 
+// AskFor2FACode asks the user for a 2FA code.
 func AskFor2FACode() (string, error) {
 	fmt.Print("Enter 2FA code: ")
 	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
@@ -38,6 +39,7 @@ func AskFor2FACode() (string, error) {
 	return code, nil
 }
 
+// AskForConfirmation asks the user for a confirmation.
 func AskForConfirmation() (bool, error) {
 	r := bufio.NewReader(os.Stdin)
 	line, _, err := r.ReadLine()

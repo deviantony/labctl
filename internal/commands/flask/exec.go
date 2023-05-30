@@ -2,7 +2,7 @@ package flask
 
 import (
 	"github.com/deviantony/labctl/internal/commands/context"
-	"github.com/deviantony/labctl/internal/ssh"
+	"github.com/deviantony/labctl/pkg/ssh"
 )
 
 // ExecCommand creates a SSH session to the given flask - matching an ID or ID prefix.
@@ -22,5 +22,5 @@ func (cmd *ExecCommand) Run(cmdCtx context.CommandExecutionContext) error {
 		return err
 	}
 
-	return ssh.ExecuteSSHSession(cmdCtx.Logger, flask.Ipv4)
+	return ssh.ExecuteSSHSession(flask.Ipv4)
 }

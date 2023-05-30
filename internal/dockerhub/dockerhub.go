@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/deviantony/labctl/internal/config"
+	"github.com/deviantony/labctl/pkg/dockerhub"
 	"go.uber.org/zap"
 )
 
@@ -14,8 +15,8 @@ type DockerHubClient struct {
 	password  string
 	twoFAcode string
 	timeout   time.Duration
-	logger    *zap.SugaredLogger
 	authToken string
+	logger    *zap.SugaredLogger
 }
 
 // NewDockerHubClient creates a new DockerHub API client.
@@ -31,17 +32,17 @@ func NewDockerHubClient(cfg config.DockerHubConfig, logger *zap.SugaredLogger, t
 
 // CreateAccessToken creates a new access token.
 // If label is not specified, it will default to "labctl-DATETIME".
-func (c *DockerHubClient) CreateAccessToken(label string) (AccessToken, error) {
+func (c *DockerHubClient) CreateAccessToken(label string) (dockerhub.AccessToken, error) {
 	if label == "" {
 		label = fmt.Sprintf("labctl-%s", time.Now().Format(time.RFC3339))
 	}
 
 	err := c.login()
 	if err != nil {
-		return AccessToken{}, err
+		return dockerhub.AccessToken{}, err
 	}
 
-	client := NewClient(c.authToken, c.timeout, c.logger)
+	client := dockerhub.NewClient(c.authToken, c.timeout)
 	return client.CreateAccessToken(label)
 }
 
@@ -52,18 +53,18 @@ func (c *DockerHubClient) DeleteAccessToken(uuid string) error {
 		return err
 	}
 
-	client := NewClient(c.authToken, c.timeout, c.logger)
+	client := dockerhub.NewClient(c.authToken, c.timeout)
 	return client.DeleteAccessToken(uuid)
 }
 
 // ListAccessTokens lists all access tokens.
-func (c *DockerHubClient) ListAccessTokens() ([]AccessToken, error) {
+func (c *DockerHubClient) ListAccessTokens() ([]dockerhub.AccessToken, error) {
 	err := c.login()
 	if err != nil {
 		return nil, err
 	}
 
-	client := NewClient(c.authToken, c.timeout, c.logger)
+	client := dockerhub.NewClient(c.authToken, c.timeout)
 	return client.ListAccessTokens()
 }
 
@@ -72,7 +73,7 @@ func (c *DockerHubClient) login() error {
 		return nil
 	}
 
-	client := NewClient(c.authToken, c.timeout, c.logger)
+	client := dockerhub.NewClient(c.authToken, c.timeout)
 
 	authToken, err := client.LoginWith2FA(c.username, c.password, c.twoFAcode)
 	if err != nil {
