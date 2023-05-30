@@ -7,12 +7,11 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"fmt"
 	"math/big"
 	"net"
 	"os"
 	"time"
-
-	"go.uber.org/zap"
 )
 
 const (
@@ -22,7 +21,7 @@ const (
 )
 
 // GenerateSelfSignedTLSCertificates generates a self-signed TLS certificate and key
-func GenerateSelfSignedTLSCertificates(logger *zap.SugaredLogger, keyPath, certificatePath string) error {
+func GenerateSelfSignedTLSCertificates(keyPath, certificatePath string) error {
 	ca := &x509.Certificate{
 		SerialNumber: big.NewInt(2019),
 		Subject: pkix.Name{
@@ -40,14 +39,12 @@ func GenerateSelfSignedTLSCertificates(logger *zap.SugaredLogger, keyPath, certi
 
 	caPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		logger.Errorf("Unable to generate CA private key: %s", err)
-		return err
+		return fmt.Errorf("unable to generate CA private key: %w", err)
 	}
 
 	caBytes, err := x509.CreateCertificate(rand.Reader, ca, ca, &caPrivKey.PublicKey, caPrivKey)
 	if err != nil {
-		logger.Errorf("Unable to generate CA TLS certificate: %s", err)
-		return err
+		return fmt.Errorf("unable to generate CA TLS certificate: %w", err)
 	}
 
 	caPEM := new(bytes.Buffer)
@@ -79,20 +76,17 @@ func GenerateSelfSignedTLSCertificates(logger *zap.SugaredLogger, keyPath, certi
 
 	certPrivKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
-		logger.Errorf("Unable to generate TLS certificate private key: %s", err)
-		return err
+		return fmt.Errorf("unable to generate TLS certificate private key: %w", err)
 	}
 
 	certBytes, err := x509.CreateCertificate(rand.Reader, cert, ca, &certPrivKey.PublicKey, caPrivKey)
 	if err != nil {
-		logger.Errorf("Unable to generate TLS certificate: %s", err)
-		return err
+		return fmt.Errorf("unable to generate TLS certificate: %w", err)
 	}
 
 	certOut, err := os.Create(certificatePath)
 	if err != nil {
-		logger.Errorf("Unable to open %s for writing: %s", certificatePath, err)
-		return err
+		return fmt.Errorf("unable  to open %s for writing: %w", certificatePath, err)
 	}
 
 	pem.Encode(certOut, &pem.Block{
@@ -102,20 +96,17 @@ func GenerateSelfSignedTLSCertificates(logger *zap.SugaredLogger, keyPath, certi
 
 	err = certOut.Close()
 	if err != nil {
-		logger.Errorf("Error closing %s: %s", certificatePath, err)
-		return err
+		return fmt.Errorf("an error occured while closing %s: %w", certificatePath, err)
 	}
 
 	keyOut, err := os.OpenFile(keyPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
-		logger.Errorf("Failed to open %s for writing: %v", keyPath, err)
-		return err
+		return fmt.Errorf("unable to open %s for writing: %w", keyPath, err)
 	}
 
 	privBytes, err := x509.MarshalPKCS8PrivateKey(certPrivKey)
 	if err != nil {
-		logger.Errorf("Unable to marshal private key: %s", err)
-		return err
+		return fmt.Errorf("unable to marshal private key: %w", err)
 	}
 
 	pem.Encode(keyOut, &pem.Block{
@@ -125,10 +116,8 @@ func GenerateSelfSignedTLSCertificates(logger *zap.SugaredLogger, keyPath, certi
 
 	err = keyOut.Close()
 	if err != nil {
-		logger.Errorf("Error closing %s: %s", keyPath, err)
-		return err
+		return fmt.Errorf("an error occured while closing %s: %w", keyPath, err)
 	}
 
-	logger.Info("TLS certificates generated")
 	return nil
 }

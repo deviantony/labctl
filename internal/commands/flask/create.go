@@ -2,11 +2,11 @@ package flask
 
 import (
 	"github.com/alecthomas/kong"
-	"github.com/deviantony/labctl/commands/context"
-	"github.com/deviantony/labctl/config"
-	"github.com/deviantony/labctl/random"
-	"github.com/deviantony/labctl/ssh"
-	"github.com/deviantony/labctl/terminal"
+	"github.com/deviantony/labctl/internal/commands/context"
+	"github.com/deviantony/labctl/internal/config"
+	"github.com/deviantony/labctl/internal/ssh"
+	"github.com/deviantony/labctl/internal/terminal"
+	"github.com/deviantony/labctl/pkg/random"
 	"github.com/deviantony/labctl/types"
 )
 

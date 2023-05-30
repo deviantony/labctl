@@ -3,8 +3,8 @@ package flask
 import (
 	"fmt"
 
-	"github.com/deviantony/labctl/commands/context"
-	"github.com/deviantony/labctl/terminal"
+	"github.com/deviantony/labctl/internal/commands/context"
+	"github.com/deviantony/labctl/internal/terminal"
 )
 
 // RmCommand removes the given flask - matching an ID or ID prefix.

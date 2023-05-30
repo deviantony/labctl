@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/deviantony/labctl/config"
-	"github.com/deviantony/labctl/filesystem"
-	"github.com/deviantony/labctl/tls"
+	"github.com/deviantony/labctl/internal/config"
+	"github.com/deviantony/labctl/pkg/filesystem"
+	"github.com/deviantony/labctl/pkg/tls"
 	"github.com/deviantony/labctl/types"
 	lxd "github.com/lxc/lxd/client"
 	"github.com/lxc/lxd/shared/api"
@@ -51,10 +51,22 @@ type (
 func NewFlaskManager(ctx context.Context, cfg config.LXDConfig, logger *zap.SugaredLogger) (*FlaskManager, error) {
 	logger.Debug("Verifying TLS certificates existence")
 
-	if !filesystem.FileExists(cfg.Client.Cert, logger) || !filesystem.FileExists(cfg.Client.Key, logger) {
+	clientCertExists, err := filesystem.FileExists(cfg.Client.Cert)
+	if err != nil {
+		logger.Errorf("Unable to verify TLS certificate existence: %s", err)
+		return nil, err
+	}
+
+	clientKeyExists, err := filesystem.FileExists(cfg.Client.Key)
+	if err != nil {
+		logger.Errorf("Unable to verify TLS key existence: %s", err)
+		return nil, err
+	}
+
+	if !clientCertExists || !clientKeyExists {
 		logger.Debug("Unable to locate TLS certificate and key, generating new ones")
 
-		err := tls.GenerateSelfSignedTLSCertificates(logger, cfg.Client.Key, cfg.Client.Cert)
+		err := tls.GenerateSelfSignedTLSCertificates(cfg.Client.Key, cfg.Client.Cert)
 		if err != nil {
 			logger.Errorf("Unable to generate TLS certificates: %s", err)
 			return nil, err

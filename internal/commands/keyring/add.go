@@ -3,9 +3,9 @@ package keyring
 import (
 	"time"
 
-	"github.com/deviantony/labctl/commands/context"
-	"github.com/deviantony/labctl/dockerhub"
-	"github.com/deviantony/labctl/terminal"
+	"github.com/deviantony/labctl/internal/commands/context"
+	"github.com/deviantony/labctl/internal/dockerhub"
+	"github.com/deviantony/labctl/internal/terminal"
 )
 
 // AddCommand adds a new key to the keyring.

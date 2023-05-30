@@ -1,9 +1,9 @@
 package keyring
 
 import (
-	"github.com/deviantony/labctl/commands/context"
-	"github.com/deviantony/labctl/dockerhub"
-	"github.com/deviantony/labctl/terminal"
+	"github.com/deviantony/labctl/internal/commands/context"
+	"github.com/deviantony/labctl/internal/dockerhub"
+	"github.com/deviantony/labctl/internal/terminal"
 )
 
 // RemoveCommand removes a key from the keyring.

@@ -1,8 +1,8 @@
 package flask
 
 import (
-	"github.com/deviantony/labctl/commands/context"
-	"github.com/deviantony/labctl/ssh"
+	"github.com/deviantony/labctl/internal/commands/context"
+	"github.com/deviantony/labctl/internal/ssh"
 )
 
 // CpCommand copies a file or a directory to a flask.

@@ -1,9 +1,9 @@
 package flask
 
 import (
-	"github.com/deviantony/labctl/commands/context"
-	"github.com/deviantony/labctl/config"
-	"github.com/deviantony/labctl/terminal"
+	"github.com/deviantony/labctl/internal/commands/context"
+	"github.com/deviantony/labctl/internal/config"
+	"github.com/deviantony/labctl/internal/terminal"
 )
 
 // LsCommand lists all running flasks.

@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	"github.com/alecthomas/kong"
-	"github.com/deviantony/labctl/commands/flask"
-	"github.com/deviantony/labctl/commands/keyring"
+	"github.com/deviantony/labctl/internal/commands/flask"
+	"github.com/deviantony/labctl/internal/commands/keyring"
 )
 
 // VersionFlag is used to display the version of the CLI.

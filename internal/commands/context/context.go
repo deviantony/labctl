@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/deviantony/labctl/config"
-	"github.com/deviantony/labctl/do"
-	"github.com/deviantony/labctl/lxd"
+	"github.com/deviantony/labctl/internal/config"
+	"github.com/deviantony/labctl/internal/do"
+	"github.com/deviantony/labctl/internal/lxd"
 	"github.com/deviantony/labctl/types"
 	"go.uber.org/zap"
 )

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/deviantony/labctl/config"
+	"github.com/deviantony/labctl/internal/config"
 	"github.com/deviantony/labctl/types"
 	"github.com/digitalocean/godo"
 	"go.uber.org/zap"

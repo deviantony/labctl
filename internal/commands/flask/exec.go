@@ -1,8 +1,8 @@
 package flask
 
 import (
-	"github.com/deviantony/labctl/commands/context"
-	"github.com/deviantony/labctl/ssh"
+	"github.com/deviantony/labctl/internal/commands/context"
+	"github.com/deviantony/labctl/internal/ssh"
 )
 
 // ExecCommand creates a SSH session to the given flask - matching an ID or ID prefix.

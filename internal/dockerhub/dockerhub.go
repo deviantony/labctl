@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/deviantony/labctl/config"
+	"github.com/deviantony/labctl/internal/config"
 	"go.uber.org/zap"
 )
 
