@@ -14,15 +14,17 @@ import (
 
 // Client is a DockerHub API client.
 type Client struct {
-	timeout time.Duration
-	logger  *zap.SugaredLogger
+	authToken string
+	timeout   time.Duration
+	logger    *zap.SugaredLogger
 }
 
 // NewClient creates a new DockerHub API client.
-func NewClient(timeout time.Duration, logger *zap.SugaredLogger) *Client {
+func NewClient(authToken string, timeout time.Duration, logger *zap.SugaredLogger) *Client {
 	return &Client{
-		timeout: timeout,
-		logger:  logger,
+		authToken: authToken,
+		timeout:   timeout,
+		logger:    logger,
 	}
 }
 
@@ -77,7 +79,7 @@ type (
 )
 
 // CreateAccessToken creates a new access token.
-func (c *Client) CreateAccessToken(token, label string) (string, error) {
+func (c *Client) CreateAccessToken(label string) (AccessToken, error) {
 	url := "https://hub.docker.com/v2/access-tokens"
 
 	payload := CreateAccessTokenPayload{
@@ -92,7 +94,7 @@ func (c *Client) CreateAccessToken(token, label string) (string, error) {
 			"url", url,
 		)
 
-		return "", err
+		return AccessToken{}, err
 	}
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewBuffer(jsonPayload))
@@ -102,11 +104,11 @@ func (c *Client) CreateAccessToken(token, label string) (string, error) {
 			"url", url,
 		)
 
-		return "", err
+		return AccessToken{}, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.authToken))
 
 	client := &http.Client{
 		Timeout: c.timeout,
@@ -119,7 +121,7 @@ func (c *Client) CreateAccessToken(token, label string) (string, error) {
 			"url", url,
 		)
 
-		return "", err
+		return AccessToken{}, err
 	}
 	defer resp.Body.Close()
 
@@ -130,7 +132,7 @@ func (c *Client) CreateAccessToken(token, label string) (string, error) {
 			"url", url,
 		)
 
-		return "", errors.New("unexpected response status")
+		return AccessToken{}, errors.New("unexpected response status")
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -140,7 +142,7 @@ func (c *Client) CreateAccessToken(token, label string) (string, error) {
 			"url", url,
 		)
 
-		return "", err
+		return AccessToken{}, err
 	}
 
 	var responseData AccessToken
@@ -151,14 +153,14 @@ func (c *Client) CreateAccessToken(token, label string) (string, error) {
 			"url", url,
 		)
 
-		return "", err
+		return AccessToken{}, err
 	}
 
-	return responseData.Token, nil
+	return responseData, nil
 }
 
 // DeleteAccessToken deletes an access token based on the specified UUID.
-func (c *Client) DeleteAccessToken(token, uuid string) error {
+func (c *Client) DeleteAccessToken(uuid string) error {
 	url := fmt.Sprintf("https://hub.docker.com/v2/access-tokens/%s", uuid)
 
 	req, err := http.NewRequest(http.MethodDelete, url, nil)
@@ -171,7 +173,7 @@ func (c *Client) DeleteAccessToken(token, uuid string) error {
 		return err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.authToken))
 
 	client := &http.Client{
 		Timeout: c.timeout,
@@ -202,7 +204,7 @@ func (c *Client) DeleteAccessToken(token, uuid string) error {
 }
 
 // ListAccessTokens lists all access tokens.
-func (c *Client) ListAccessTokens(token string) ([]AccessToken, error) {
+func (c *Client) ListAccessTokens() ([]AccessToken, error) {
 	url := "https://hub.docker.com/v2/access-tokens"
 
 	req, err := http.NewRequest(http.MethodGet, url, nil)
@@ -215,7 +217,7 @@ func (c *Client) ListAccessTokens(token string) ([]AccessToken, error) {
 		return []AccessToken{}, err
 	}
 
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token))
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", c.authToken))
 
 	client := &http.Client{
 		Timeout: c.timeout,

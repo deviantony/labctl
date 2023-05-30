@@ -10,62 +10,75 @@ import (
 
 // DockerHubClient is a high-level wrapper around the DockerHub API client.
 type DockerHubClient struct {
-	Username string
-	Password string
-
-	timeout time.Duration
-	code    string
-	logger  *zap.SugaredLogger
+	username  string
+	password  string
+	twoFAcode string
+	timeout   time.Duration
+	logger    *zap.SugaredLogger
+	authToken string
 }
 
 // NewDockerHubClient creates a new DockerHub API client.
 func NewDockerHubClient(cfg config.DockerHubConfig, logger *zap.SugaredLogger, twoFACode string) *DockerHubClient {
 	return &DockerHubClient{
-		Username: cfg.Username,
-		Password: cfg.Password,
-		timeout:  cfg.Timeout,
-		logger:   logger,
-		code:     twoFACode,
+		username:  cfg.Username,
+		password:  cfg.Password,
+		timeout:   cfg.Timeout,
+		logger:    logger,
+		twoFAcode: twoFACode,
 	}
-}
-
-// ListAccessTokens lists all access tokens.
-func (c *DockerHubClient) ListAccessTokens() ([]AccessToken, error) {
-	client := NewClient(c.timeout, c.logger)
-
-	authToken, err := client.LoginWith2FA(c.Username, c.Password, c.code)
-	if err != nil {
-		return nil, err
-	}
-
-	return client.ListAccessTokens(authToken)
 }
 
 // CreateAccessToken creates a new access token.
 // If label is not specified, it will default to "labctl-DATETIME".
-func (c *DockerHubClient) CreateAccessToken(label string) (string, error) {
+func (c *DockerHubClient) CreateAccessToken(label string) (AccessToken, error) {
 	if label == "" {
 		label = fmt.Sprintf("labctl-%s", time.Now().Format(time.RFC3339))
 	}
 
-	client := NewClient(c.timeout, c.logger)
-
-	authToken, err := client.LoginWith2FA(c.Username, c.Password, c.code)
+	err := c.login()
 	if err != nil {
-		return "", err
+		return AccessToken{}, err
 	}
 
-	return client.CreateAccessToken(authToken, label)
+	client := NewClient(c.authToken, c.timeout, c.logger)
+	return client.CreateAccessToken(label)
 }
 
 // DeleteAccessToken deletes an access token.
 func (c *DockerHubClient) DeleteAccessToken(uuid string) error {
-	client := NewClient(c.timeout, c.logger)
-
-	authToken, err := client.LoginWith2FA(c.Username, c.Password, c.code)
+	err := c.login()
 	if err != nil {
 		return err
 	}
 
-	return client.DeleteAccessToken(authToken, uuid)
+	client := NewClient(c.authToken, c.timeout, c.logger)
+	return client.DeleteAccessToken(uuid)
+}
+
+// ListAccessTokens lists all access tokens.
+func (c *DockerHubClient) ListAccessTokens() ([]AccessToken, error) {
+	err := c.login()
+	if err != nil {
+		return nil, err
+	}
+
+	client := NewClient(c.authToken, c.timeout, c.logger)
+	return client.ListAccessTokens()
+}
+
+func (c *DockerHubClient) login() error {
+	if c.authToken != "" {
+		return nil
+	}
+
+	client := NewClient(c.authToken, c.timeout, c.logger)
+
+	authToken, err := client.LoginWith2FA(c.username, c.password, c.twoFAcode)
+	if err != nil {
+		return err
+	}
+
+	c.authToken = authToken
+	return nil
 }
