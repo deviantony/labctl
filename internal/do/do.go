@@ -15,7 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/wait"
 )
 
-const LABCTL_FLASK_TAG = "labctl-flask"
+const DEFAULT_LABCTL_FLASK_TAG = "labctl-flask"
 
 type (
 	// FlaskManager is used to manage flasks in DigitalOcean
@@ -37,6 +37,10 @@ type (
 // It can create and manage flasks in DigitalOcean as droplets
 func NewFlaskManager(ctx context.Context, cfg config.DigitalOceanConfig, logger *zap.SugaredLogger) (*FlaskManager, error) {
 	client := godo.NewFromToken(cfg.APIToken)
+
+	if cfg.TagName == "" {
+		cfg.TagName = DEFAULT_LABCTL_FLASK_TAG
+	}
 
 	return &FlaskManager{
 		ctx:    ctx,
@@ -138,7 +142,7 @@ func (manager *FlaskManager) ListFlasks() ([]types.Flask, error) {
 			}
 
 			for _, tag := range droplet.Tags {
-				if tag == LABCTL_FLASK_TAG {
+				if tag == manager.config.TagName {
 					flask := types.Flask{
 						Name: droplet.Name,
 						DO: types.FlaskDOProperties{

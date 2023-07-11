@@ -44,6 +44,7 @@ type DigitalOceanConfig struct {
 	BaseImage         string        `yaml:"baseImage"`
 	PollInterval      time.Duration `yaml:"pollInterval"`
 	PollTimeout       time.Duration `yaml:"pollTimeout"`
+	TagName           string        `yaml:"tagName"`
 }
 
 // LXDConfig contains the configuration for the LXD provider

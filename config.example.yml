@@ -22,3 +22,4 @@ do:
   baseImage: ubuntu-22-04-x64
   pollInterval: 5s
   pollTimeout: 2m
+  tagName: labctl-flask

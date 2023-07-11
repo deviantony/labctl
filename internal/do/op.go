@@ -10,7 +10,7 @@ func (manager *FlaskManager) createDroplet(config dropletConfig) (int, error) {
 		Image: godo.DropletCreateImage{
 			Slug: manager.config.BaseImage,
 		},
-		Tags: []string{LABCTL_FLASK_TAG},
+		Tags: []string{manager.config.TagName},
 		SSHKeys: []godo.DropletCreateSSHKey{
 			{Fingerprint: manager.config.SSHKeyFingerprint},
 		},
