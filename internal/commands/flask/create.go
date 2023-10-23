@@ -1,7 +1,10 @@
 package flask
 
 import (
+	"fmt"
+
 	"github.com/alecthomas/kong"
+	"github.com/atotto/clipboard"
 	"github.com/deviantony/labctl/internal/commands/context"
 	"github.com/deviantony/labctl/internal/config"
 	terminal "github.com/deviantony/labctl/internal/display"
@@ -91,6 +94,19 @@ func (cmd *CreateCommand) Run(cmdCtx context.CommandExecutionContext) error {
 				"IP", flask.Ipv4,
 			)
 		}
+
+		sshCommand := fmt.Sprintf("ssh -o StrictHostKeyChecking=no root@%s", flask.Ipv4)
+
+		err = clipboard.WriteAll(sshCommand)
+		if err != nil {
+			cmdCtx.Logger.Warnf("Unable to add command to clipboard. Error: %s", err.Error())
+			cmdCtx.Logger.Infoln("Use the command below to SSH into the flask")
+			cmdCtx.Logger.Infoln(sshCommand)
+			return err
+		}
+
+		cmdCtx.Logger.Infoln("Command added to clipboard. Paste or use the command below to SSH into the flask")
+		cmdCtx.Logger.Infoln(sshCommand)
 
 		return nil
 	}

@@ -1,14 +1,15 @@
 module github.com/deviantony/labctl
 
-go 1.20
+go 1.21
 
 require (
 	github.com/alecthomas/kong v0.6.1
+	github.com/atotto/clipboard v0.1.4
 	github.com/digitalocean/godo v1.81.0
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/jedib0t/go-pretty/v6 v6.3.8
 	github.com/lxc/lxd v0.0.0-20230222203621-cc8422591948
-	go.uber.org/zap v1.21.0
+	go.uber.org/zap v1.24.0
 	golang.org/x/term v0.8.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/apimachinery v0.24.3
