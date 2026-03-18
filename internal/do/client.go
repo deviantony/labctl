@@ -172,36 +172,48 @@ func (c *Client) WaitUntilReady(droplet *types.Droplet) error {
 	}
 }
 
-func mapRegion(region string) string {
-	switch region {
-	case "usw":
-		return "sfo3"
-	case "use":
-		return "nyc1"
-	case "eu":
-		return "fra1"
-	case "ap":
-		return "sgp1"
-	case "au":
-		return "syd1"
-	default:
-		return region
+// Option represents a CLI alias mapped to a provider-specific value.
+type Option struct {
+	Alias string `json:"alias"`
+	Slug  string `json:"slug"`
+}
+
+// RegionOptions returns all region alias-to-slug mappings.
+func RegionOptions() []Option {
+	return []Option{
+		{"usw", "sfo3"},
+		{"use", "nyc1"},
+		{"eu", "fra1"},
+		{"ap", "sgp1"},
+		{"au", "syd1"},
 	}
 }
 
-func mapSize(size string) string {
-	switch size {
-	case "xs":
-		return "s-1vcpu-512mb-10gb"
-	case "s":
-		return "s-1vcpu-1gb"
-	case "m":
-		return "s-2vcpu-4gb"
-	case "l":
-		return "s-4vcpu-8gb"
-	case "xl":
-		return "s-8vcpu-16gb"
-	default:
-		return size
+// SizeOptions returns all size alias-to-slug mappings.
+func SizeOptions() []Option {
+	return []Option{
+		{"xs", "s-1vcpu-512mb-10gb"},
+		{"s", "s-1vcpu-1gb"},
+		{"m", "s-2vcpu-4gb"},
+		{"l", "s-4vcpu-8gb"},
+		{"xl", "s-8vcpu-16gb"},
 	}
+}
+
+func mapRegion(region string) string {
+	for _, o := range RegionOptions() {
+		if o.Alias == region {
+			return o.Slug
+		}
+	}
+	return region
+}
+
+func mapSize(size string) string {
+	for _, o := range SizeOptions() {
+		if o.Alias == size {
+			return o.Slug
+		}
+	}
+	return size
 }

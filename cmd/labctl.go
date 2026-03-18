@@ -56,6 +56,19 @@ func main() {
 	}
 	defer logger.Sync()
 
+	globals := &commands.Globals{
+		JSON:   commands.CLI.JSON,
+		Logger: logger,
+	}
+
+	// Commands like "options" don't need config or an API client.
+	cmd := cliCtx.Command()
+	if cmd == "options" {
+		err = cliCtx.Run(globals)
+		cliCtx.FatalIfErrorf(err)
+		return
+	}
+
 	configPath := os.Getenv(config.ConfigEnvOverride)
 	if configPath == "" {
 		home, err := os.UserHomeDir()
@@ -71,10 +84,6 @@ func main() {
 	}
 
 	client := do.NewClient(context.Background(), cfg, logger)
-	globals := &commands.Globals{
-		JSON:   commands.CLI.JSON,
-		Logger: logger,
-	}
 
 	err = cliCtx.Run(client, globals)
 	cliCtx.FatalIfErrorf(err)

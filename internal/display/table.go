@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/deviantony/labctl/internal/do"
 	"github.com/deviantony/labctl/types"
 	"github.com/jedib0t/go-pretty/v6/table"
 )
@@ -20,6 +21,21 @@ func DisplayDroplets(droplets []types.Droplet) {
 	}
 
 	t.Render()
+}
+
+// DisplayOptions renders a labeled table of alias-to-slug mappings.
+func DisplayOptions(label string, options []do.Option) {
+	fmt.Printf("%s:\n", label)
+	t := table.NewWriter()
+	t.SetOutputMirror(os.Stdout)
+	t.AppendHeader(table.Row{"Alias", "DigitalOcean Slug"})
+
+	for _, o := range options {
+		t.AppendRow(table.Row{o.Alias, o.Slug})
+	}
+
+	t.Render()
+	fmt.Println()
 }
 
 // PrintJSON writes v as indented JSON to stdout.
