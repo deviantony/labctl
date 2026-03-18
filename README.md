@@ -2,6 +2,24 @@
 
 Manage DigitalOcean droplets from the command line. Spin up ephemeral lab environments, SSH in, tear them down when you're done.
 
+## Install
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/deviantony/labctl/main/install.sh | bash
+```
+
+To install a specific version:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/deviantony/labctl/main/install.sh | VERSION=0.8.0 bash
+```
+
+Installs to `/usr/local/bin` by default. Override with `INSTALL_DIR`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/deviantony/labctl/main/install.sh | INSTALL_DIR=$HOME/.local/bin bash
+```
+
 ## Configuration
 
 Create `~/.labctl/config.yml` and restrict its permissions (it contains your API token):
