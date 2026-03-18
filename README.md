@@ -1,91 +1,71 @@
 # labctl
 
-Control your lab environment from the command line.
+Manage DigitalOcean droplets from the command line. Spin up ephemeral lab environments, SSH in, tear them down when you're done.
 
-## Installation
+## Configuration
 
-````
-curl https://anthony.portainer.io/bin/labctl | sudo bash
-````
+Create `~/.labctl/config.yml`:
+
+```yaml
+apiToken: your-digitalocean-api-token
+projectID: your-digitalocean-project-id
+sshKeyFingerprint: your-ssh-key-fingerprint
+baseImage: ubuntu-22-04-x64
+pollInterval: 5s
+pollTimeout: 2m
+tagName: labctl
+```
+
+| Property | Description |
+|----------|-------------|
+| `apiToken` | DigitalOcean API token |
+| `projectID` | Project to assign droplets to |
+| `sshKeyFingerprint` | Fingerprint of an SSH key registered in your DO account |
+| `baseImage` | Image slug for new droplets |
+| `pollInterval` | How often to check droplet readiness (e.g. `5s`) |
+| `pollTimeout` | Max wait time for readiness (e.g. `2m`) |
+| `tagName` | Tag for labctl-managed droplets (default: `labctl`) |
+
+Override the config path with `LABCTL_CONFIG`:
+
+```
+export LABCTL_CONFIG=/path/to/config.yml
+```
 
 ## Usage
 
-### Configuration
-
-Override default configuration:
+Create a droplet:
 
 ```
-export LABCTL_CONFIG=/root/workspace/labctl/data/config.yml
+labctl create
 ```
 
-### Lab environments (flasks)
+Options: `-r` region (`usw`, `use`, `eu`, `ap`, `au`), `-s` size (`xs`, `s`, `m`, `l`, `xl`), `-n` name.
 
-A flask represent a lab environment.
+The SSH command is copied to your clipboard and printed to stdout.
 
-Create a new flask:
+List droplets:
 
-````
-labctl flask create
-````
+```
+labctl ls
+```
 
-List existing flasks:
+Remove droplets:
 
-````
-labctl flask ls
-````
+```
+labctl rm <id> [<id>...]
+```
 
-Remove a flask:
+Check version and API connectivity:
 
-````
-labctl flask rm <flask-id>
-````
+```
+labctl status
+```
 
-Or remove all flasks:
+Add `--json` to any command for JSON output.
 
-````
-labctl flask rm
-````
+## Building
 
-Copy files into a flask:
-
-````
-labctl flask cp <flask-id> <source> <destination>
-````
-
-Exec (SSH) into a flask:
-
-````
-labctl flask exec <flask-id>
-````
-
-### Access keys and tokens (keyring)
-
-A keyring is a collection of access keys and tokens.
-
-Add a new key to the keyring:
-
-````
-labctl keyring add
-````
-
-List existing keys:
-
-````
-labctl keyring ls
-````
-
-Remove a key from the keyring:
-
-````
-labctl keyring rm <keyring-id>
-````
-
-### Recipes
-
-*NOTE*: Recipes are not implemented yet.
-
-Apply a recipe:
-
-````
-labctl recipe apply <recipe-id | recipe-name>
-````
+```
+make build
+```
