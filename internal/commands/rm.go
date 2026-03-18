@@ -3,6 +3,7 @@ package commands
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/deviantony/labctl/internal/do"
 )
@@ -14,22 +15,34 @@ type RmCommand struct {
 
 // Run executes the rm command.
 func (cmd *RmCommand) Run(client *do.Client, globals *Globals) error {
-	var errs []string
+	var (
+		mu   sync.Mutex
+		errs []string
+		wg   sync.WaitGroup
+	)
 
 	for _, id := range cmd.IDs {
-		globals.Logger.Infow("Removing droplet", "id", id)
+		wg.Add(1)
+		go func(id int) {
+			defer wg.Done()
+			globals.Logger.Infow("Removing droplet", "id", id)
 
-		if err := client.RemoveDroplet(id); err != nil {
-			globals.Logger.Errorw("Failed to remove droplet", "id", id, "error", err)
-			errs = append(errs, fmt.Sprintf("droplet %d: %s", id, err))
-			continue
-		}
+			if err := client.RemoveDroplet(id); err != nil {
+				globals.Logger.Errorw("Failed to remove droplet", "id", id, "error", err)
+				mu.Lock()
+				errs = append(errs, fmt.Sprintf("droplet %d: %v", id, err))
+				mu.Unlock()
+				return
+			}
 
-		globals.Logger.Infow("Droplet removed", "id", id)
+			globals.Logger.Infow("Droplet removed", "id", id)
+		}(id)
 	}
 
+	wg.Wait()
+
 	if len(errs) > 0 {
-		return fmt.Errorf("failed to remove some droplets:\n  %s", strings.Join(errs, "\n  "))
+		return fmt.Errorf("failed to remove droplets:\n  %s", strings.Join(errs, "\n  "))
 	}
 
 	return nil

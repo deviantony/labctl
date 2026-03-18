@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/deviantony/labctl/internal/do"
 	"github.com/deviantony/labctl/types"
@@ -14,13 +15,38 @@ import (
 func DisplayDroplets(droplets []types.Droplet) {
 	t := table.NewWriter()
 	t.SetOutputMirror(os.Stdout)
-	t.AppendHeader(table.Row{"ID", "Name", "IPv4", "Region", "Size"})
+	t.AppendHeader(table.Row{"ID", "Name", "IPv4", "Region", "Size", "Uptime"})
 
 	for _, d := range droplets {
-		t.AppendRow(table.Row{d.ID, d.Name, d.IPv4, d.Region, d.Size})
+		t.AppendRow(table.Row{d.ID, d.Name, d.IPv4, d.Region, d.Size, formatUptime(d.CreatedAt)})
 	}
 
 	t.Render()
+}
+
+// formatUptime returns a human-readable duration since the given RFC 3339 timestamp.
+func formatUptime(createdAt string) string {
+	created, err := time.Parse(time.RFC3339, createdAt)
+	if err != nil {
+		return "-"
+	}
+
+	d := time.Since(created)
+
+	switch {
+	case d < time.Minute:
+		return fmt.Sprintf("%ds", int(d.Seconds()))
+	case d < time.Hour:
+		return fmt.Sprintf("%dm", int(d.Minutes()))
+	case d < 24*time.Hour:
+		h := int(d.Hours())
+		m := int(d.Minutes()) % 60
+		return fmt.Sprintf("%dh%dm", h, m)
+	default:
+		days := int(d.Hours()) / 24
+		h := int(d.Hours()) % 24
+		return fmt.Sprintf("%dd%dh", days, h)
+	}
 }
 
 // DisplayOptions renders a labeled table of alias-to-slug mappings.

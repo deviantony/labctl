@@ -2,7 +2,7 @@
 apiToken: your-digitalocean-api-token
 projectID: your-digitalocean-project-id
 sshKeyFingerprint: your-ssh-key-fingerprint
-baseImage: ubuntu-22-04-x64
+baseImage: ubuntu-24-04-x64
 pollInterval: 5s
 pollTimeout: 2m
 tagName: labctl

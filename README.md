@@ -10,7 +10,7 @@ Create `~/.labctl/config.yml`:
 apiToken: your-digitalocean-api-token
 projectID: your-digitalocean-project-id
 sshKeyFingerprint: your-ssh-key-fingerprint
-baseImage: ubuntu-22-04-x64
+baseImage: ubuntu-24-04-x64
 pollInterval: 5s
 pollTimeout: 2m
 tagName: labctl
@@ -18,7 +18,7 @@ tagName: labctl
 
 | Property | Description |
 |----------|-------------|
-| `apiToken` | DigitalOcean API token |
+| `apiToken` | DigitalOcean API token (see [Token Scopes](#token-scopes)) |
 | `projectID` | Project to assign droplets to |
 | `sshKeyFingerprint` | Fingerprint of an SSH key registered in your DO account |
 | `baseImage` | Image slug for new droplets |
@@ -31,6 +31,21 @@ Override the config path with `LABCTL_CONFIG`:
 ```
 export LABCTL_CONFIG=/path/to/config.yml
 ```
+
+### Token Scopes
+
+When creating a fine-grained personal access token, select these scopes:
+
+| Scope | Used by |
+|---|---|
+| `droplet:create` | `create` command |
+| `droplet:delete` | `rm` command |
+| `ssh_key:read` | Looking up the SSH key fingerprint during droplet creation |
+| `tag:create` | Applying the `labctl` tag to new droplets |
+| `project:update` | Assigning droplets to your project |
+| `account:read` | `status` command |
+
+The DigitalOcean UI will automatically include required dependencies (`droplet:read`, `project:read`, `regions:read`, `sizes:read`, `image:read`, `actions:read`).
 
 ## Usage
 

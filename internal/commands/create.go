@@ -25,12 +25,12 @@ func (cmd *CreateCommand) Run(client *do.Client, globals *Globals) error {
 
 	globals.Logger.Infow("Creating droplet", "name", name, "region", cmd.Region, "size", cmd.Size)
 
-	droplet, err := client.CreateDroplet(name, cmd.Region, cmd.Size)
+	droplet, actionHREF, err := client.CreateDroplet(name, cmd.Region, cmd.Size)
 	if err != nil {
 		return err
 	}
 
-	err = client.WaitUntilReady(&droplet)
+	err = client.WaitUntilReady(&droplet, actionHREF)
 	if err != nil {
 		return err
 	}

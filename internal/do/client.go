@@ -36,8 +36,8 @@ func NewClient(ctx context.Context, cfg config.Config, logger *zap.SugaredLogger
 	}
 }
 
-// CreateDroplet creates a new droplet and returns it.
-func (c *Client) CreateDroplet(name, region, size string) (types.Droplet, error) {
+// CreateDroplet creates a new droplet and returns it along with the action HREF for monitoring.
+func (c *Client) CreateDroplet(name, region, size string) (types.Droplet, string, error) {
 	resolvedRegion := mapRegion(region)
 	resolvedSize := mapSize(size)
 
@@ -53,14 +53,23 @@ func (c *Client) CreateDroplet(name, region, size string) (types.Droplet, error)
 		Monitoring: true,
 	}
 
-	newDroplet, _, err := c.client.Droplets.Create(c.ctx, createReq)
+	newDroplet, resp, err := c.client.Droplets.Create(c.ctx, createReq)
 	if err != nil {
-		return types.Droplet{}, fmt.Errorf("unable to create droplet: %w", err)
+		return types.Droplet{}, "", fmt.Errorf("unable to create droplet: %w", err)
 	}
 
-	_, _, err = c.client.Projects.AssignResources(c.ctx, c.config.ProjectID, newDroplet.URN())
-	if err != nil {
-		c.logger.Warnw("Unable to assign droplet to project", "error", err)
+	// Fire-and-forget project assignment — failure is non-fatal.
+	// Use a detached context so the call completes even if the parent is cancelled.
+	go func() {
+		ctx := context.WithoutCancel(c.ctx)
+		if _, _, err := c.client.Projects.AssignResources(ctx, c.config.ProjectID, newDroplet.URN()); err != nil {
+			c.logger.Warnw("Unable to assign droplet to project", "error", err)
+		}
+	}()
+
+	var actionHREF string
+	if resp.Links != nil && len(resp.Links.Actions) > 0 {
+		actionHREF = resp.Links.Actions[0].HREF
 	}
 
 	return types.Droplet{
@@ -68,7 +77,7 @@ func (c *Client) CreateDroplet(name, region, size string) (types.Droplet, error)
 		Name:   name,
 		Region: resolvedRegion,
 		Size:   resolvedSize,
-	}, nil
+	}, actionHREF, nil
 }
 
 // ListDroplets lists all droplets with the configured tag.
@@ -89,11 +98,12 @@ func (c *Client) ListDroplets() ([]types.Droplet, error) {
 			}
 
 			droplets = append(droplets, types.Droplet{
-				ID:     d.ID,
-				Name:   d.Name,
-				Region: d.Region.Slug,
-				Size:   d.Size.Slug,
-				IPv4:   ip,
+				ID:        d.ID,
+				Name:      d.Name,
+				Region:    d.Region.Slug,
+				Size:      d.Size.Slug,
+				IPv4:      ip,
+				CreatedAt: d.Created,
 			})
 		}
 
@@ -130,15 +140,57 @@ func (c *Client) RemoveDroplet(id int) error {
 }
 
 // WaitUntilReady polls until the droplet is active and SSH-reachable.
-func (c *Client) WaitUntilReady(droplet *types.Droplet) error {
+// It uses the Actions API to wait for the droplet to become active, then
+// switches to a tighter polling loop for SSH readiness.
+func (c *Client) WaitUntilReady(droplet *types.Droplet, actionHREF string) error {
 	deadline := time.After(c.config.PollTimeout)
+
+	// Phase 1: Wait for the droplet action to complete (active + IP).
+	ip, err := c.waitForActive(droplet, actionHREF, deadline)
+	if err != nil {
+		return err
+	}
+
+	// Phase 2: Wait for SSH with a tighter interval (1s) since this is just a local TCP dial.
+	return c.waitForSSH(droplet, ip, deadline)
+}
+
+// waitForActive polls until the droplet is active and has a public IP.
+// Uses the Actions API when available, falling back to Droplets.Get.
+func (c *Client) waitForActive(droplet *types.Droplet, actionHREF string, deadline <-chan time.Time) (string, error) {
 	ticker := time.NewTicker(c.config.PollInterval)
 	defer ticker.Stop()
 
 	for {
+		// Check action status if we have an action HREF.
+		if actionHREF != "" {
+			action, _, err := c.client.DropletActions.GetByURI(c.ctx, actionHREF)
+			if err != nil {
+				return "", fmt.Errorf("unable to check action status: %w", err)
+			}
+
+			if action.Status == "errored" {
+				return "", fmt.Errorf("droplet creation action failed for droplet %d", droplet.ID)
+			}
+
+			if action.Status != "completed" {
+				c.logger.Infow("Waiting for droplet to be active", "action_status", action.Status)
+				select {
+				case <-ticker.C:
+					continue
+				case <-deadline:
+					return "", fmt.Errorf("timed out waiting for droplet %d to be ready", droplet.ID)
+				}
+			}
+
+			// Action completed — no need to check it again on subsequent iterations.
+			actionHREF = ""
+		}
+
+		// Action completed (or no action HREF) — fetch the droplet to get the IP.
 		d, _, err := c.client.Droplets.Get(c.ctx, droplet.ID)
 		if err != nil {
-			return err
+			return "", err
 		}
 
 		if d.Status != "active" {
@@ -146,28 +198,57 @@ func (c *Client) WaitUntilReady(droplet *types.Droplet) error {
 		} else {
 			ip, err := d.PublicIPv4()
 			if err != nil {
-				return err
+				return "", err
 			}
-
-			if ip == "" {
-				c.logger.Infow("Waiting for droplet to have an IP address")
-			} else {
-				conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:22", ip), 2*time.Second)
-				if err != nil {
-					c.logger.Infow("Waiting for SSH to be ready", "ip", ip)
-				} else {
-					conn.Close()
-					droplet.IPv4 = ip
-					return nil
-				}
+			if ip != "" {
+				return ip, nil
 			}
+			c.logger.Infow("Waiting for droplet to have an IP address")
 		}
 
 		select {
 		case <-ticker.C:
 			continue
 		case <-deadline:
-			return fmt.Errorf("timed out waiting for droplet %d to be ready", droplet.ID)
+			return "", fmt.Errorf("timed out waiting for droplet %d to be ready", droplet.ID)
+		}
+	}
+}
+
+const (
+	sshPollInterval = 2 * time.Second
+	sshDialTimeout  = 1 * time.Second
+)
+
+// waitForSSH polls TCP port 22 on the droplet's IP with a tight interval.
+func (c *Client) waitForSSH(droplet *types.Droplet, ip string, deadline <-chan time.Time) error {
+	ticker := time.NewTicker(sshPollInterval)
+	defer ticker.Stop()
+
+	addr := fmt.Sprintf("%s:22", ip)
+
+	// Check immediately before waiting for the first tick.
+	if conn, err := net.DialTimeout("tcp", addr, sshDialTimeout); err == nil {
+		conn.Close()
+		droplet.IPv4 = ip
+		return nil
+	}
+
+	c.logger.Infow("Waiting for SSH to be ready", "ip", ip)
+
+	for {
+		select {
+		case <-ticker.C:
+			conn, err := net.DialTimeout("tcp", addr, sshDialTimeout)
+			if err != nil {
+				c.logger.Infow("Waiting for SSH to be ready", "ip", ip)
+				continue
+			}
+			conn.Close()
+			droplet.IPv4 = ip
+			return nil
+		case <-deadline:
+			return fmt.Errorf("timed out waiting for SSH on droplet %d (%s)", droplet.ID, ip)
 		}
 	}
 }
@@ -200,20 +281,32 @@ func SizeOptions() []Option {
 	}
 }
 
-func mapRegion(region string) string {
+var regionMap = func() map[string]string {
+	m := make(map[string]string, len(RegionOptions()))
 	for _, o := range RegionOptions() {
-		if o.Alias == region {
-			return o.Slug
-		}
+		m[o.Alias] = o.Slug
+	}
+	return m
+}()
+
+var sizeMap = func() map[string]string {
+	m := make(map[string]string, len(SizeOptions()))
+	for _, o := range SizeOptions() {
+		m[o.Alias] = o.Slug
+	}
+	return m
+}()
+
+func mapRegion(region string) string {
+	if slug, ok := regionMap[region]; ok {
+		return slug
 	}
 	return region
 }
 
 func mapSize(size string) string {
-	for _, o := range SizeOptions() {
-		if o.Alias == size {
-			return o.Slug
-		}
+	if slug, ok := sizeMap[size]; ok {
+		return slug
 	}
 	return size
 }

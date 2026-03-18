@@ -23,10 +23,10 @@ The config is loaded at startup in `cmd/labctl.go` and passed to the DigitalOcea
 
 | Property | Type | Required | Default | Description |
 |----------|------|----------|---------|-------------|
-| `apiToken` | string | yes | — | DigitalOcean API token. Used to authenticate all API calls. |
+| `apiToken` | string | yes | — | DigitalOcean API token. Used to authenticate all API calls. See **Token Scopes** below for required permissions. |
 | `projectID` | string | yes | — | DigitalOcean project ID. New droplets are assigned to this project for organizational grouping. |
 | `sshKeyFingerprint` | string | yes | — | Fingerprint of the SSH key to inject into new droplets. Must match a key already registered in your DigitalOcean account. |
-| `baseImage` | string | yes | — | Image slug for new droplets (e.g. `ubuntu-22-04-x64`). This is the OS image every droplet starts from. |
+| `baseImage` | string | yes | — | Image slug for new droplets (e.g. `ubuntu-24-04-x64`). This is the OS image every droplet starts from. |
 | `pollInterval` | duration | yes | — | How often to check if a newly created droplet is ready. Parsed as a Go duration (e.g. `5s`, `10s`). |
 | `pollTimeout` | duration | yes | — | Maximum time to wait for a droplet to become ready before giving up. Parsed as a Go duration (e.g. `2m`, `5m`). |
 | `tagName` | string | no | `labctl` | Tag applied to all droplets created by labctl. Used to scope `ls` to only show labctl-managed droplets. If omitted, defaults to `"labctl"` in the DO client constructor (`internal/do/client.go`). |
@@ -39,11 +39,26 @@ From `config.example.yml`:
 apiToken: your-digitalocean-api-token
 projectID: your-digitalocean-project-id
 sshKeyFingerprint: your-ssh-key-fingerprint
-baseImage: ubuntu-22-04-x64
+baseImage: ubuntu-24-04-x64
 pollInterval: 5s
 pollTimeout: 2m
 tagName: labctl
 ```
+
+## Token Scopes
+
+When creating a fine-grained personal access token for `apiToken`, select these scopes:
+
+| Scope | Used by |
+|---|---|
+| `droplet:create` | `create` command — provisions new droplets |
+| `droplet:delete` | `rm` command — tears down droplets |
+| `ssh_key:read` | Looking up the SSH key fingerprint during droplet creation |
+| `tag:create` | Applying the `labctl` tag to new droplets |
+| `project:update` | Assigning newly created droplets to the configured project |
+| `account:read` | `status` command — verifies API connectivity |
+
+The DigitalOcean token UI will automatically include required dependency scopes: `droplet:read`, `project:read`, `regions:read`, `sizes:read`, `image:read`, and `actions:read`. The `droplet:read` scope covers listing droplets (`ls`) and polling droplet/action status during creation.
 
 ## How Defaults Work
 
