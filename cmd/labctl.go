@@ -9,9 +9,8 @@ import (
 
 	"github.com/alecthomas/kong"
 	"github.com/deviantony/labctl/internal/commands"
-	cmdctx "github.com/deviantony/labctl/internal/commands/context"
 	"github.com/deviantony/labctl/internal/config"
-	"github.com/deviantony/labctl/pkg/random"
+	"github.com/deviantony/labctl/internal/do"
 	"github.com/deviantony/labctl/types"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -23,15 +22,14 @@ func initializeLogger(debug bool) (*zap.SugaredLogger, error) {
 		if err != nil {
 			return nil, err
 		}
-
 		return logger.Sugar(), nil
 	}
 
-	config := zap.NewProductionConfig()
-	config.Encoding = "console"
-	config.DisableStacktrace = true
-	config.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.TimeOnly)
-	logger, err := config.Build()
+	zapCfg := zap.NewProductionConfig()
+	zapCfg.Encoding = "console"
+	zapCfg.DisableStacktrace = true
+	zapCfg.EncoderConfig.EncodeTime = zapcore.TimeEncoderOfLayout(time.TimeOnly)
+	logger, err := zapCfg.Build()
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +40,7 @@ func initializeLogger(debug bool) (*zap.SugaredLogger, error) {
 func main() {
 	cliCtx := kong.Parse(&commands.CLI,
 		kong.Name("labctl"),
-		kong.Description("Control your lab environment from the command line."),
+		kong.Description("Manage DigitalOcean droplets from the command line."),
 		kong.UsageOnError(),
 		kong.ConfigureHelp(kong.HelpOptions{
 			Compact: true,
@@ -58,9 +56,13 @@ func main() {
 	}
 	defer logger.Sync()
 
-	configPath := os.Getenv(config.CONFIG_ENV_OVERRIDE)
+	configPath := os.Getenv(config.ConfigEnvOverride)
 	if configPath == "" {
-		configPath = filepath.Join(os.Getenv("HOME"), config.CONFIG_PATH)
+		home, err := os.UserHomeDir()
+		if err != nil {
+			logger.Fatalf("Unable to determine home directory: %s", err)
+		}
+		configPath = filepath.Join(home, config.ConfigPath)
 	}
 
 	cfg, err := config.NewConfig(configPath)
@@ -68,17 +70,12 @@ func main() {
 		logger.Fatalf("Unable to read configuration file: %s", err)
 	}
 
-	if commands.CLI.Provider == "lxd" {
-		cfg.SetProvider(config.PROVIDER_LXD)
-	} else {
-		cfg.SetProvider(config.PROVIDER_DO)
+	client := do.NewClient(context.Background(), cfg, logger)
+	globals := &commands.Globals{
+		JSON:   commands.CLI.JSON,
+		Logger: logger,
 	}
-	logger.Infof("Using provider: %s", cfg.GetProvider())
 
-	random.NonDeterministicMode()
-	ctx := context.Background()
-
-	cmdCtx := cmdctx.NewCommandExecutionContext(ctx, cfg, logger)
-	err = cliCtx.Run(cmdCtx)
+	err = cliCtx.Run(client, globals)
 	cliCtx.FatalIfErrorf(err)
 }
