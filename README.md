@@ -4,7 +4,11 @@ Manage DigitalOcean droplets from the command line. Spin up ephemeral lab enviro
 
 ## Configuration
 
-Create `~/.labctl/config.yml`:
+Create `~/.labctl/config.yml` and restrict its permissions (it contains your API token):
+
+```bash
+chmod 600 ~/.labctl/config.yml
+```
 
 ```yaml
 apiToken: your-digitalocean-api-token

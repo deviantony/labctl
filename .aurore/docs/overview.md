@@ -2,7 +2,7 @@
 type: overview
 title: Project Overview
 summary: CLI tool for managing ephemeral DigitalOcean droplets for lab environments.
-scanned_at_commit: 98491e9d01c27506d1add05ed4b935117de7ecf0
+scanned_at_commit: 712a73a7df12e354f38b27a0f3d6093e410ca096
 ---
 
 # labctl
@@ -11,20 +11,21 @@ labctl solves a specific problem: spinning up and tearing down DigitalOcean drop
 
 ## How It Works
 
-The CLI is intentionally minimal. Four commands cover the full lifecycle:
+The CLI is intentionally minimal. Five commands cover the full lifecycle:
 
 - **`create`** — provisions a droplet with a random petname (like `brave-falcon`), polls until SSH is reachable, copies the SSH command to clipboard
-- **`ls`** — lists all droplets tagged with `labctl`
-- **`rm`** — deletes one or more droplets by ID
+- **`ls`** — lists all droplets tagged with `labctl`, showing uptime for each
+- **`rm`** — deletes one or more droplets by ID, in parallel
 - **`status`** — health check showing version and whether the DO API token is valid (useful for automation)
+- **`options`** — displays available region and size aliases with their DigitalOcean slug mappings
 
 All droplets are tagged (default: `labctl`) so labctl only sees its own resources. Droplets are assigned to a configured DigitalOcean project for organizational clarity.
 
 ## Design Choices
 
-**No abstraction layers.** Earlier versions of labctl supported multiple providers (LXD, DigitalOcean) behind a `FlaskManager` interface. The revamp removed that abstraction entirely — the code talks directly to the `godo` client. This makes the codebase dramatically simpler since there's only one provider to support.
+**No abstraction layers.** The code talks directly to the `godo` client — there's no provider interface or abstraction. With only DigitalOcean to support, an indirection layer would add complexity without value.
 
-**Polling for readiness.** After creating a droplet, labctl polls until three conditions are met: the droplet status is "active", it has a public IPv4 address, and TCP port 22 accepts connections. This ensures the SSH command actually works when it's handed to the user.
+**Two-phase readiness polling.** After creating a droplet, labctl first polls the DigitalOcean Actions API until the creation action completes (droplet is active with an IP), then switches to a tighter loop that dials TCP port 22 until SSH accepts connections. This two-phase approach avoids unnecessary Droplets.Get calls during provisioning while ensuring the SSH command actually works when it's handed to the user.
 
 **Random naming.** Droplet names default to petnames (adjective-animal combinations) generated from embedded word lists. This avoids naming conflicts without requiring user input.
 
@@ -35,3 +36,7 @@ labctl is a single Go binary using [Kong](./commands.md) for CLI parsing and the
 - **[CLI Commands](./commands.md)** — `cmd/labctl.go` and `internal/commands/` define the user-facing interface
 - **[Infrastructure](./infrastructure.md)** — `internal/do/`, `internal/display/`, `pkg/random/`, and `types/` implement the DO client, output formatting, and name generation
 - **[Configuration](./configuration.md)** — `internal/config/` and `~/.labctl/config.yml` define credentials, infrastructure settings, and polling behavior
+
+## Build & Release
+
+The project uses a Makefile for local development (`make build`, `make install`) and GoReleaser via GitHub Actions for releases. Pushing a `v*` tag triggers the release workflow, which builds static binaries for Linux and macOS (amd64/arm64) and creates a GitHub release. An `install.sh` script provides curl-based installation for end users. Version is injected at build time via ldflags — local builds get the `git describe` output, releases get the tag version.

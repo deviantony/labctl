@@ -9,10 +9,12 @@ labctl is a CLI tool for managing ephemeral DigitalOcean droplets. It handles th
 ## Build & Run
 
 ```bash
-make build          # Build static binary to dist/labctl (CGO_ENABLED=0)
-make release        # Full release build (no cache)
+make build          # Build static binary to dist/labctl
+make install        # Build and install to $GOPATH/bin
 make clean          # Remove dist/
 ```
+
+Releases are handled by GoReleaser via GitHub Actions on `v*` tag push. See `.goreleaser.yml` and `.github/workflows/release.yml`.
 
 There are no tests or linters configured.
 
@@ -25,7 +27,7 @@ There are no tests or linters configured.
 - `internal/config/` — YAML config loader (`~/.labctl/config.yml` or `$LABCTL_CONFIG`)
 - `internal/do/` — DigitalOcean API client wrapping `godo`
 - `internal/display/` — Table rendering with `go-pretty` and JSON output mode
-- `types/` — `Droplet` struct and `VERSION` constant
+- `types/` — `Droplet` struct and `VERSION` variable (set via ldflags at build time)
 - `pkg/random/` — Petname generator for auto-naming droplets
 
 **CLI framework**: Kong with struct-tag-based command definitions. Commands implement `Run(globals *Globals)` methods. The command router is in `internal/commands/cli.go`.
@@ -38,4 +40,4 @@ Config file at `~/.labctl/config.yml` with fields: `apiToken`, `projectID`, `ssh
 
 ## Version
 
-Version is stored as a constant in `types/droplet.go`.
+Version is a `var` in `types/droplet.go`, defaulting to `dev`. It is overridden at build time via `-ldflags -X` in the Makefile and GoReleaser config.

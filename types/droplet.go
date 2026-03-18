@@ -1,6 +1,6 @@
 package types
 
-const VERSION = "0.8.0"
+var VERSION = "dev"
 
 // Droplet represents a DigitalOcean droplet managed by labctl.
 type Droplet struct {

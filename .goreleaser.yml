@@ -1,0 +1,32 @@
+version: 2
+
+builds:
+  - main: ./cmd/labctl.go
+    binary: labctl
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w -X github.com/deviantony/labctl/types.VERSION={{ .Version }}
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: tar.gz
+    name_template: >-
+      {{ .ProjectName }}_
+      {{- if eq .Os "linux" }}Linux{{ else }}Darwin{{ end }}_
+      {{- if eq .Arch "amd64" }}x86_64{{ else }}{{ .Arch }}{{ end }}
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"

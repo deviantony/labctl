@@ -4,7 +4,7 @@ summary: YAML configuration file structure, properties, defaults, and environmen
 covers:
   - internal/config/**
   - config.example.yml
-scanned_at_commit: 98491e9d01c27506d1add05ed4b935117de7ecf0
+scanned_at_commit: 712a73a7df12e354f38b27a0f3d6093e410ca096
 layer: core
 order: 3
 ---
@@ -17,7 +17,7 @@ labctl loads its configuration from a single YAML file. The config drives all Di
 
 The config file is loaded from `~/.labctl/config.yml` by default. This can be overridden by setting the `LABCTL_CONFIG` environment variable to an absolute path, which is useful for CI/automation or when running multiple labctl configurations side by side.
 
-The config is loaded at startup in `cmd/labctl.go` and passed to the DigitalOcean client constructor. If the file is missing or malformed, labctl exits with a fatal error.
+The config is loaded at startup in `cmd/labctl.go` and passed to the DigitalOcean client constructor. If the file is missing or malformed, labctl exits with a fatal error. Commands that don't need config (like `options`) are routed before config loading and skip this step entirely.
 
 ## Properties
 
