@@ -1,25 +1,8 @@
-# Sample configuration file
-
-dockerhub:
-  username: deviantony
-  password: my-super-strong-password
-  timeout: 5s
-
-lxd:
-  server:
-    addr: https://homesrv.local:8443
-    password: pwd
-  client:
-    cert: data/cert.pem
-    key: data/key.pem
-    timeout: 10s
-  sshPublicKey: data/id_rsa.pub
-
-do:
-  apiToken: 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
-  projectID: 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
-  sshKeyFingerprint: 1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef
-  baseImage: ubuntu-22-04-x64
-  pollInterval: 5s
-  pollTimeout: 2m
-  tagName: labctl-flask
+# labctl configuration
+apiToken: your-digitalocean-api-token
+projectID: your-digitalocean-project-id
+sshKeyFingerprint: your-ssh-key-fingerprint
+baseImage: ubuntu-22-04-x64
+pollInterval: 5s
+pollTimeout: 2m
+tagName: labctl
