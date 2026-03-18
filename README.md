@@ -5,16 +5,16 @@ Manage DigitalOcean droplets from the command line. Spin up ephemeral lab enviro
 ## Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/deviantony/labctl/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/deviantony/labctl/main/install.sh | sudo bash
 ```
 
 To install a specific version:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/deviantony/labctl/main/install.sh | VERSION=0.8.0 bash
+curl -fsSL https://raw.githubusercontent.com/deviantony/labctl/main/install.sh | sudo VERSION=0.8.0 bash
 ```
 
-Installs to `/usr/local/bin` by default. Override with `INSTALL_DIR`:
+Installs to `/usr/local/bin` by default. Override with `INSTALL_DIR` to skip `sudo`:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/deviantony/labctl/main/install.sh | INSTALL_DIR=$HOME/.local/bin bash

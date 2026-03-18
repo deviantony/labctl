@@ -4,7 +4,7 @@ summary: YAML configuration file structure, properties, defaults, and environmen
 covers:
   - internal/config/**
   - config.example.yml
-scanned_at_commit: 712a73a7df12e354f38b27a0f3d6093e410ca096
+scanned_at_commit: 7a525d5bc240aec68ade915265c1dd139b70bb2f
 layer: core
 order: 3
 ---
